@@ -1,3 +1,3 @@
 (executables
-  (names torch_example)
+  (names torch_example http_example)
   (libraries torch cohttp-lwt-unix))
