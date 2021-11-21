@@ -11,7 +11,7 @@ module type Model = sig
   (* save a model into a file with a give filename *)
   val save : t -> string -> unit
   (* open up a model file with a given filename, parse a model object from it *)
-  val open : string -> t
+  val load : string -> t
 
   (* train a binary classifier on two playlists represented as tensors *)
   val train : playlist -> playlist -> t

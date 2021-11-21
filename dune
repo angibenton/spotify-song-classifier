@@ -1,3 +1,4 @@
 (executables
-  (names torch_example http_example)
-  (libraries torch cohttp-lwt-unix))
+  (names torch_example http_example sklearn_example)
+  (libraries torch cohttp-lwt-unix sklearn)
+  (modules_without_implementation model test))

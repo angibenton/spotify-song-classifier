@@ -5,9 +5,6 @@ let () =
   Tensor.print tensor
 
 
-  open Base
-open Torch
-
 
 (* This should reach ~97% accuracy. 
 let hidden_nodes = 128
