@@ -6,26 +6,30 @@ open Core
 type song = {name: string; id: string; features: Np.Ndarray.t;}
 
 type playlist = {name: string; id: string; features: Np.Ndarray.t;}
-type svm = {hyperplane: int; class1: string; class2: string}
 
-module Model = struct 
+type svm = {hyperplane: Np.Ndarray.t; class1: string; class2: string}
+
+module Model = struct
   (* the model *)
-  type t = {hyperplane: Np.Ndarray.t; class1: string; class2: string}
+  type t = svm
 
   (* save a model into a file with a give filename *)
   let save (svc: t) (file: string) : unit = 
     match svc with |
       {hyperplane; class1; class2} 
       -> Stdio.Out_channel.create file |> fun (f) 
-         -> Stdio.Out_channel.output_string f (class1 ^ "\n" ^ class2 ^ "\n" ^ (Np.Ndarray.to_string hyperplane))
+         -> Stdio.Out_channel.output_string f (class1 ^ "\n" ^ class2 ^ "\n" ^ 
+                                               (Array.fold (Np.Ndarray.to_float_array hyperplane) 
+                                                  ~init:"" ~f:(fun s v -> s ^ " " ^ Float.to_string v)))
 
   (* open up a model file with a given filename, parse a model object from it *)
   let load (file: string) : t =
+    List.iter (Stdio.In_channel.read_lines file) ~f:(Printf.printf "%s");
     match Stdio.In_channel.read_lines file with 
     | class1 :: class2 :: arr :: [] -> String.split ~on:' ' arr 
                                        |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 
                                        |> fun (hyperplane) -> {hyperplane; class1; class2;}
-    | _-> failwith "Improper file formatting"
+    | some -> List.iter some ~f:(Printf.printf "%s"); {hyperplane=(Np.Ndarray.of_int_list [2]); class1 ="l"; class2="f"}
 
   (* train a binary classifier on two playlists represented as tensors *)
   let train (p1: playlist) (p2: playlist) : t =
@@ -56,3 +60,5 @@ let () =
   Format.printf "%a\n" LinearSVC.pp @@ LinearSVC.fit clf ~x ~y;
   Format.printf "%a\n" Np.pp (LinearSVC.coef_ clf);
   Format.printf "%a\n" Np.pp (LinearSVC.intercept_ clf);
+  Model.save {hyperplane = (Np.append ~arr:(LinearSVC.coef_ clf) () ~values:(LinearSVC.intercept_ clf)); class1 = "1"; class2 = "2"} "TestSVM.txt";
+  Model.load "TestSVM.txt" |> fun (_) -> ();
