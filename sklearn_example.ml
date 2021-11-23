@@ -15,18 +15,20 @@ module Model = struct
 
   (* save a model into a file with a give filename *)
   let save (svc: t) (file: string) : unit = 
-    match svc with |
+    let f = Stdio.Out_channel.create file
+    in match svc with |
       {hyperplane; class1; class2} 
-      -> Stdio.Out_channel.create file |> fun (f) 
-         -> Stdio.Out_channel.output_string f (class1 ^ "\n" ^ class2 ^ "\n" ^ 
+      -> Stdio.Out_channel.output_string f (class1 ^ "\n" ^ class2 ^ "\n" ^ 
                                                (Array.fold (Np.Ndarray.to_float_array hyperplane) 
-                                                  ~init:"" ~f:(fun s v -> s ^ " " ^ Float.to_string v)))
+                                                  ~init:"" ~f:(fun s v -> s ^ " " ^ Float.to_string v)));
+                                                  Stdio.Out_channel.flush f;
+                                                  Stdio.Out_channel.close f
+                                                
 
   (* open up a model file with a given filename, parse a model object from it *)
   let load (file: string) : t =
-    List.iter (Stdio.In_channel.read_lines file) ~f:(Printf.printf "%s");
     match Stdio.In_channel.read_lines file with 
-    | class1 :: class2 :: arr :: [] -> String.split ~on:' ' arr 
+    | class1 :: class2 :: arr :: [] -> String.split ~on:' ' arr |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
                                        |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 
                                        |> fun (hyperplane) -> {hyperplane; class1; class2;}
     | some -> List.iter some ~f:(Printf.printf "%s"); {hyperplane=(Np.Ndarray.of_int_list [2]); class1 ="l"; class2="f"}
