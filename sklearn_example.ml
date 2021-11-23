@@ -50,17 +50,17 @@ module Model = struct
   let classify (svc: t) (s: song) : string =
     match svc, s with 
     | {hyperplane; class1; class2}, {features; _} -> 
-      if 0 < Array.get (Np.Ndarray.to_int_array @@ Np.dot ~b:hyperplane features) 0 then class1 else class2
+      if Float.(>) 0. @@ Array.get (Np.Ndarray.to_float_array @@ Np.dot ~b:(Np.append ~arr:features () ~values:(Np.vectori [|1|])) hyperplane) 0 then class1 else class2
 
 end 
 
 let () = 
-  let y = Np.vectori [| 1; 1; 2; 2 |] in
+  let y = Np.vectori [| 0; 0; 1; 1 |] in
   let x = Np.matrixf [| [| -1.; -1. |]; [| -2.; -1. |]; [| -1.; -1. |]; [| 2.; 1. |] |]
   in
   let clf = LinearSVC.create ~c:1.0 () in
   Format.printf "%a\n" LinearSVC.pp @@ LinearSVC.fit clf ~x ~y;
   Format.printf "%a\n" Np.pp (LinearSVC.coef_ clf);
   Format.printf "%a\n" Np.pp (LinearSVC.intercept_ clf);
-  Model.save {hyperplane = (Np.append ~arr:(LinearSVC.coef_ clf) () ~values:(LinearSVC.intercept_ clf)); class1 = "1"; class2 = "2"} "TestSVM.txt";
-  Model.load "TestSVM.txt" |> fun (_) -> ();
+  Model.save {hyperplane = (Np.append ~arr:(LinearSVC.coef_ clf) () ~values:(LinearSVC.intercept_ clf)); class1 = "first"; class2 = "second"} "TestSVM.txt";
+  Model.load "TestSVM.txt" |> fun (svm) -> Printf.printf "%s" @@ Model.classify svm {features = Np.vectorf [| -2.; -1. |]; name = "hi"; id = "h"}
