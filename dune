@@ -1,4 +1,11 @@
 (executables
   (names torch_example http_example sklearn_example)
-  (libraries torch cohttp-lwt-unix sklearn)
+  (libraries 
+    core
+    torch 
+    cohttp-lwt-unix 
+    sklearn 
+    yojson 
+    ppx_deriving_yojson.runtime)
+  (preprocess (pps ppx_deriving_yojson))
   (modules_without_implementation model test))
