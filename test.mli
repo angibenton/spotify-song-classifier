@@ -1,9 +1,14 @@
 open Torch
+module Np = Np.Numpy
 
-type song = {name: string; id: string; features: Tensor.t;}
+type song = {name: string; id: string; features: Np.Ndarray.t;}
 
-type playlist = {name: string; id: string; features: Tensor.t;}
-  
+type playlist = {name: string; id: string; features: Np.Ndarray.t;}
+
+type confusion_matrix = {tp: int; fp: int; tn: int; fn: int}
+
+type svm = {hyperplane: Np.Ndarray.t; class1: string; class2: string}
+
 module type Model = sig 
   (* the model *)
   type t 
@@ -17,6 +22,8 @@ module type Model = sig
   val train : playlist -> playlist -> t
   (* classify a song represented by a vector into one of the two playlists true = first, false = second *)
   val classify : t -> song -> playlist 
+  (* *)
+  val test : t -> Np.Ndarray.t -> Np.Ndarray.t -> confusion_matrix
 
 end 
 

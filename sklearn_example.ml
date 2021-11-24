@@ -9,6 +9,8 @@ type playlist = {name: string; id: string; features: Np.Ndarray.t;}
 
 type svm = {hyperplane: Np.Ndarray.t; class1: string; class2: string}
 
+type confusion_matrix = {tp: int; fp: int; tn: int; fn: int}
+
 module Model = struct
   (* the model *)
   type t = svm
@@ -19,16 +21,17 @@ module Model = struct
     in match svc with |
       {hyperplane; class1; class2} 
       -> Stdio.Out_channel.output_string f (class1 ^ "\n" ^ class2 ^ "\n" ^ 
-                                               (Array.fold (Np.Ndarray.to_float_array hyperplane) 
-                                                  ~init:"" ~f:(fun s v -> s ^ " " ^ Float.to_string v)));
-                                                  Stdio.Out_channel.flush f;
-                                                  Stdio.Out_channel.close f
-                                                
+                                            (Array.fold (Np.Ndarray.to_float_array hyperplane) 
+                                               ~init:"" ~f:(fun s v -> s ^ " " ^ Float.to_string v)));
+      Stdio.Out_channel.flush f;
+      Stdio.Out_channel.close f
+
 
   (* open up a model file with a given filename, parse a model object from it *)
   let load (file: string) : t =
     match Stdio.In_channel.read_lines file with 
-    | class1 :: class2 :: arr :: [] -> String.split ~on:' ' arr |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
+    | class1 :: class2 :: arr :: [] -> String.split ~on:' ' arr 
+                                       |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
                                        |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 
                                        |> fun (hyperplane) -> {hyperplane; class1; class2;}
     | some -> List.iter some ~f:(Printf.printf "%s"); {hyperplane=(Np.Ndarray.of_int_list [2]); class1 ="l"; class2="f"}
@@ -37,30 +40,66 @@ module Model = struct
   let train (p1: playlist) (p2: playlist) : t =
     let x, y = match p1, p2 with
       | {features = features1; _}, {features = features2; _} 
-        -> Array.init (Np.size features1) ~f:(fun _ -> -1) |> fun (arr1) 
-           -> (Np.append ~arr:features1 () ~values:features2), 
-              Array.append arr1 @@ Array.init (Np.size features2) ~f:(fun _ -> 1) |> Np.Ndarray.of_int_array 
-    in let clf = LinearSVC.create ~c:1.0 () 
+        -> Array.init (Np.size ~axis:0 features1) ~f:(fun _ -> -1) |> fun (arr1) 
+           -> (Np.append ~axis:0 ~arr:features1 () ~values:features2), 
+              (Array.append arr1 @@ Array.init (Np.size ~axis:0 features2) ~f:(fun _ -> 1) 
+               |> Np.Ndarray.of_int_array)
+    in let clf = LinearSVC.create ~c:1.0 ~dual:false () 
     in match p1, p2 with 
     | {name = class1; _}, {name = class2; _} 
-      -> {hyperplane = (LinearSVC.fit clf ~x ~y |> fun (svm) 
-                        -> Np.append ~arr:(LinearSVC.coef_ svm) () ~values:(LinearSVC.intercept_ svm)); class1; class2}
+      -> {hyperplane = (LinearSVC.fit clf ~x ~y |> fun (svc) 
+                        -> Np.append ~arr:(LinearSVC.coef_ svc) () 
+                          ~values:(LinearSVC.intercept_ svc)); class1; class2}
+
+  let predict (svc: t) (features: Np.Ndarray.t) : bool =
+    match svc with 
+    | {hyperplane; _} -> Float.(>) 0. @@ 
+      Array.get (Np.Ndarray.to_float_array @@ Np.dot ~b:(Np.append ~arr:features () 
+                                                           ~values:(Np.vectori [|1|])) hyperplane) 0
 
   (* classify a song represented by a vector into one of the two playlists true = first, false = second *)
   let classify (svc: t) (s: song) : string =
     match svc, s with 
-    | {hyperplane; class1; class2}, {features; _} -> 
-      if Float.(>) 0. @@ Array.get (Np.Ndarray.to_float_array @@ Np.dot ~b:(Np.append ~arr:features () ~values:(Np.vectori [|1|])) hyperplane) 0 then class1 else class2
+    | {class1; class2; _}, {features; _} 
+      -> if predict svc features then class1 else class2
+
+  let row (matrix: Np.Ndarray.t) (index: int) : Np.Ndarray.t =
+    Np.Ndarray.get ~key:[Np.slice ~i:index ~j:(index + 1) (); Np.slice ~i:0 ~j:(Np.size ~axis:1 matrix) ()] matrix
+
+  let rec test_sample_i (svc: t) (samples: Np.Ndarray.t) (pos: int) (index: int) : int =
+    if (index >= Np.size ~axis:0 samples) then pos 
+    else (test_sample_i svc samples (if predict svc @@ row samples index then pos + 1 else pos) (index + 1))
+
+  let test (svc: t) (pos: playlist) (neg: playlist) : confusion_matrix =
+    match pos, neg with 
+      {features = posFeatures; _}, {features = negFeatures; _} -> 
+      let tp = test_sample_i svc posFeatures 0 0
+      in let fp = test_sample_i svc negFeatures 0 0
+      in let fn = Np.size ~axis:0 posFeatures
+      in let tn = Np.size ~axis:0 negFeatures
+      in {tp; fp; fn; tn}
+
+  let accuracy (c: confusion_matrix) : float =
+    match c with 
+    | {tp; tn; fp; fn;} -> Float.(/) (Int.to_float @@ tp + tn) (Int.to_float @@ tp + tn + fp + fn) 
+
+  let f1_score (c: confusion_matrix) : float =
+    match c with 
+    | {tp; fp; fn; _} -> Float.(/) (Int.to_float tp) 
+                           (Float.(+) (Int.to_float tp) @@ Float.( * ) 0.5 @@ Int.to_float @@ fp + fn) 
+
 
 end 
 
 let () = 
-  let y = Np.vectori [| 0; 0; 1; 1 |] in
-  let x = Np.matrixf [| [| -1.; -1. |]; [| -2.; -1. |]; [| -1.; -1. |]; [| 2.; 1. |] |]
-  in
-  let clf = LinearSVC.create ~c:1.0 () in
-  Format.printf "%a\n" LinearSVC.pp @@ LinearSVC.fit clf ~x ~y;
-  Format.printf "%a\n" Np.pp (LinearSVC.coef_ clf);
-  Format.printf "%a\n" Np.pp (LinearSVC.intercept_ clf);
-  Model.save {hyperplane = (Np.append ~arr:(LinearSVC.coef_ clf) () ~values:(LinearSVC.intercept_ clf)); class1 = "first"; class2 = "second"} "TestSVM.txt";
-  Model.load "TestSVM.txt" |> fun (svm) -> Printf.printf "%s" @@ Model.classify svm {features = Np.vectorf [| -2.; -1. |]; name = "hi"; id = "h"}
+  let playlist1 = {name = "the first one"; id = "123"; 
+                   features = (Np.matrixf [| [| -1.; -1. |]; [| -2.; -1. |]; [| 4.; 3.2|]; [| 2.; 1. |] |])}
+  in let playlist2 = {name = "the second one"; id = "124"; 
+                      features = (Np.matrixf [| [| -1.; -1. |];  |])}
+  in let classifier = Model.train playlist1 playlist2
+  in Model.save classifier "TestSVM.txt";
+  let perf = Model.test classifier playlist1 playlist2 
+  in Printf.printf "Training accuracy: %f" @@ Model.accuracy perf;
+  Printf.printf "Training F1 Score: %f" @@ Model.f1_score perf;
+  Model.load "TestSVM.txt" |> fun (svc) -> Printf.printf "%s"
+  @@ Model.classify svc {features = Np.vectorf [| 2.; 1. |]; name = "hi"; id = "h"}
