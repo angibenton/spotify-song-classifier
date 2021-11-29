@@ -65,6 +65,15 @@ let update_token () =
    - ill-formed token (we can make sure this never happen) 
    - bad ID (we have to handle this)
    - more?
+   
+
+   Idea: literally check for this exact string?
+   {
+    "error": {
+        "status": 401,
+        "message": "The access token expired"
+    }
+}
 *) 
 
 
@@ -78,7 +87,7 @@ let request_song_features (id: string): string t =
   let uri = Uri.of_string ("https://api.spotify.com/v1/audio-features/" ^ id) in
   let headers = Header.init ()
   |> fun h -> Header.add h "Content-Type" "application/json"
-  |> fun h -> Header.add h "Authorization" ("Bearer BQCBzWX2w7T7jlOzwayjnFtNkY6VhrQFAgl50ZwyHhA8h1tyjY54_bLpkJljIXISbcPpwNuSUdWQqYTp1Zg") 
+  |> fun h -> Header.add h "Authorization" ("Bearer " ^ !global_token) 
   |> fun h -> Header.add h "Accept" "application/json"
   in
   Client.call ~headers `GET uri 
@@ -87,7 +96,7 @@ let request_song_features (id: string): string t =
   if code = 200 then 
     body |> Cohttp_lwt.Body.to_string
   else if code = 401 then
-    Lwt.fail_with @@ "TODO HANDLE 401"
+    Lwt.fail_with @@ "TODO HANDLE 401 features"
   else 
     Lwt.fail_with @@ "Request for song features failed, code: " ^ (Int.to_string code)
 ;;
@@ -105,7 +114,7 @@ let request_song_metadata (id: string): string t =
   if code = 200 then 
     body |> Cohttp_lwt.Body.to_string
   else if code = 401 then
-    Lwt.fail_with @@ "TODO HANDLE 401"
+    Lwt.fail_with @@ "TODO HANDLE 401 metadata"
   else 
     Lwt.fail_with @@ "Request for song metadata failed, code: " ^ (Int.to_string code)
 ;;
