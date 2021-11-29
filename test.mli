@@ -17,15 +17,21 @@ module type Model = sig
   val save : t -> string -> unit
   (* open up a model file with a given filename, parse a model object from it *)
   val load : string -> t
-
   (* train a binary classifier on two playlists represented as tensors *)
   val train : playlist -> playlist -> t
-  (* classify a song represented by a vector into one of the two playlists true = first, false = second *)
-  val classify : t -> song -> playlist 
-  (* *)
-  val test : t -> Np.Ndarray.t -> Np.Ndarray.t -> confusion_matrix
-
+  (* predict the class a new feature vector belongs to, true being positive class *)
+  val predict : t -> Np.Ndarray.t -> bool
 end 
+
+module type Classification = sig
+  type classifier
+  (* classify a song represented by a vector into one of the two playlists *)
+  val classify : classifier -> song -> playlist
+  (* return the confusion matrix from testing the model on a tensor of labeled songs *)
+  val test : classifier -> Np.Ndarray.t -> confusion_matrix
+  val accuracy : confusion_matrix -> float
+  val f1_score : confusion_matrix -> float
+end
 
 module type SpotifyAPI = sig 
 
