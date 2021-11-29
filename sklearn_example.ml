@@ -27,20 +27,20 @@ module type Model = sig
 end 
 
 module type Classification = sig
-  type classifier
+  type t
   (* classify a song represented by a vector into one of the two playlists *)
-  val classify : classifier -> song -> string
+  val classify : t -> song -> string
   (* return the confusion matrix from testing the model on a tensor of labeled songs *)
-  val test : classifier -> playlist -> playlist -> confusion_matrix
+  val test : t -> playlist -> playlist -> confusion_matrix
   val accuracy : confusion_matrix -> float
   val f1_score : confusion_matrix -> float
 end
 
-module Classification (Classifier: Model) : (Classification with type classifier = Classifier.t) = struct
-  type classifier = Classifier.t
+module Classification (Classifier: Model) : (Classification with type t = Classifier.t) = struct
+  type t = Classifier.t
 
   (* classify a song represented by a vector into one of the two playlists true = first, false = second *)
-  let classify (c: classifier) (s: song) : string =
+  let classify (c: t) (s: song) : string =
     match Classifier.classes c, s with 
     | (class1, class2), {features; _} 
       -> if Classifier.predict c features then class1 else class2
@@ -48,11 +48,11 @@ module Classification (Classifier: Model) : (Classification with type classifier
   let row (matrix: Np.Ndarray.t) (index: int) : Np.Ndarray.t =
     Np.Ndarray.get ~key:[Np.slice ~i:index ~j:(index + 1) (); Np.slice ~i:0 ~j:(Np.size ~axis:1 matrix) ()] matrix
 
-  let rec test_sample_i (c: classifier) (samples: Np.Ndarray.t) (pos: int) (index: int) : int =
+  let rec test_sample_i (c: t) (samples: Np.Ndarray.t) (pos: int) (index: int) : int =
     if (index >= Np.size ~axis:0 samples) then pos 
     else (test_sample_i c samples (if Classifier.predict c @@ row samples index then pos + 1 else pos) (index + 1))
 
-  let test (c: classifier) (pos: playlist) (neg: playlist) : confusion_matrix =
+  let test (c: t) (pos: playlist) (neg: playlist) : confusion_matrix =
     match pos, neg with 
       {features = posFeatures; _}, {features = negFeatures; _} -> 
       let tp = test_sample_i c posFeatures 0 0
@@ -112,7 +112,7 @@ module SVM_Model = struct
                           ~values:(LinearSVC.intercept_ svc)); class1; class2}
 
   let predict_score (hyperplane: Np.Ndarray.t) (features: Np.Ndarray.t) : float =
-    let normalize = Np.Ndarray.get ~key:[Np.slice ~i:0 (); Np.slice ~i:12 ()] hyperplane 
+    let normalize = Np.Ndarray.get ~key:[Np.slice ~i:0 ~j:12 ();] hyperplane 
                     |> fun (coef) -> Np.dot coef ~b:coef |> Np.Ndarray.to_float_array 
                                      |> fun (arr) -> Array.get arr 0
     in Float.(/) (Array.get (Np.Ndarray.to_float_array @@ 
