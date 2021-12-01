@@ -1,3 +1,8 @@
+
+# Created by https://www.toptal.com/developers/gitignore/api/ocaml,venv
+# Edit at https://www.toptal.com/developers/gitignore?templates=ocaml,venv
+
+### OCaml ###
 *.annot
 *.cmo
 *.cma
@@ -27,3 +32,22 @@ setup.log
 
 # Local OPAM switch
 _opam/
+
+### venv ###
+# Virtualenv
+# http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
+.Python
+[Bb]in
+[Ii]nclude
+[Ll]ib
+[Ll]ib64
+[Ll]ocal
+[Ss]cripts
+pyvenv.cfg
+.venv
+pip-selfcheck.json
+
+# End of https://www.toptal.com/developers/gitignore/api/ocaml,venv
+
+# models are saved in .txt #
+*.txt
