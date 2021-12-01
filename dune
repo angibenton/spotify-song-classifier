@@ -1,11 +1,30 @@
+(library
+ (name machine_learning)
+ (modules machine_learning)
+ (preprocess
+  (pps ppx_let))
+ (libraries core sklearn)
+ (modules_without_implementation spotify))
+
+(library
+ (name svm)
+ (modules svm)
+ (preprocess
+  (pps ppx_let))
+ (libraries core sklearn machine_learning)
+ (modules_without_implementation spotify))
+
 (executables
-  (names torch_example http_example sklearn_example)
-  (libraries 
-    core
-    torch 
-    cohttp-lwt-unix 
-    sklearn 
-    yojson 
-    ppx_deriving_yojson.runtime)
-  (preprocess (pps ppx_deriving_yojson))
-  (modules_without_implementation model test))
+ (names torch_example http_example run)
+ (modules torch_example http_example run)
+ (libraries
+  svm
+  core
+  torch
+  cohttp-lwt-unix
+  sklearn
+  yojson
+  ppx_deriving_yojson.runtime)
+ (preprocess
+  (pps ppx_deriving_yojson ppx_let))
+ (modules_without_implementation spotify))

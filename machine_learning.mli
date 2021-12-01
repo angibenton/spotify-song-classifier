@@ -1,13 +1,12 @@
-open Torch
 module Np = Np.Numpy
 
 type song = {name: string; id: string; features: Np.Ndarray.t;}
 
 type playlist = {name: string; id: string; features: Np.Ndarray.t;}
 
-type confusion_matrix = {tp: int; fp: int; tn: int; fn: int}
-
 type svm = {hyperplane: Np.Ndarray.t; class1: string; class2: string}
+
+type confusion_matrix = {tp: int; fp: int; tn: int; fn: int}
 
 module type Model = sig 
   (* the model *)
@@ -21,23 +20,18 @@ module type Model = sig
   val train : playlist -> playlist -> t
   (* predict the class a new feature vector belongs to, true being positive class *)
   val predict : t -> Np.Ndarray.t -> bool
+  (* give the class names of the model *)
+  val classes: t -> string * string
 end 
 
 module type Classification = sig
-  type classifier
+  type t
   (* classify a song represented by a vector into one of the two playlists *)
-  val classify : classifier -> song -> playlist
+  val classify : t -> song -> string
   (* return the confusion matrix from testing the model on a tensor of labeled songs *)
-  val test : classifier -> Np.Ndarray.t -> confusion_matrix
+  val test : t -> playlist -> playlist -> confusion_matrix
+  (* calculate the accuracy of a test result confusion matrix *)
   val accuracy : confusion_matrix -> float
+  (* calculate the F1 Score of a test result confusion matrix *)
   val f1_score : confusion_matrix -> float
-end
-
-module type SpotifyAPI = sig 
-
-  (* use an id to query spotify for song metadata and convert the result to a song object *)
-  val song_of_id : string -> song 
-  (* use an id to query spotify for playlist metadata and convert the result to a playlist object *)
-  val playlist_of_id : string -> playlist 
-  
 end
