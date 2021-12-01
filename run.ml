@@ -1,4 +1,5 @@
 open Core
+open Machine_learning
 open Svm
 
 let playlist_of_id = fun (s) ->
