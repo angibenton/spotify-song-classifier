@@ -11,13 +11,13 @@ type confusion_matrix = {tp: int; fp: int; tn: int; fn: int}
 module type Model = sig 
   (* the model *)
   type t 
-
+  type hyperparameters
   (* save a model into a file with a give filename *)
   val save : t -> string -> unit
   (* open up a model file with a given filename, parse a model object from it *)
   val load : string -> t
   (* train a binary classifier on two playlists represented as tensors *)
-  val train : playlist -> playlist -> t
+  val train : hyperparameters -> playlist -> playlist -> t
   (* predict the class a new feature vector belongs to, true being positive class *)
   val predict : t -> Np.Ndarray.t -> bool
   (* give the class names of the model *)
@@ -35,3 +35,5 @@ module type Classification = sig
   (* calculate the F1 Score of a test result confusion matrix *)
   val f1_score : confusion_matrix -> float
 end
+
+module Classification (Classifier: Model) : (Classification with type t = Classifier.t)

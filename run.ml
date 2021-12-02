@@ -22,13 +22,15 @@ let train =
           ~doc:"Compute and display the training accuracy"
       and f1 = flag "--f1" (no_arg)
           ~doc:"Compute and display the training F1 score"
+      and c = flag "--c" (optional_with_default 1.0 float)
+          ~doc:"Specify the regularization strength"
       in
       fun () -> Stdio.print_string "Loading playlist 1…\n"; 
         playlist_of_id playlist1 
         |> fun p1 -> Stdio.print_string "Loading playlist 2…\n"; 
         (p1, playlist_of_id playlist2) 
         |> fun (p1, p2) -> Stdio.print_string "Training model…\n"; 
-        SVM_Model.train p1 p2 
+        SVM_Model.train c p1 p2 
         |> fun (svm) -> if acc || f1 then Stdio.print_string "Evaluating model on training set...\n"; 
         SVM_Classification.test svm p1 p2 
         |> fun (cm) -> (if acc then Stdio.printf "Training accuracy is %f.\n" 

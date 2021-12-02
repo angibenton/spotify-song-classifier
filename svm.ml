@@ -8,6 +8,8 @@ module SVM_Model = struct
   (* the model *)
   type t = svm
 
+  type hyperparameters = float
+
   (* save a model into a file with a give filename *)
   let save (svc: t) (file: string) : unit = 
     let f = Stdio.Out_channel.create file
@@ -30,14 +32,14 @@ module SVM_Model = struct
     | some -> List.iter some ~f:(Printf.printf "%s"); {hyperplane=(Np.Ndarray.of_int_list [2]); class1 ="l"; class2="f"}
 
   (* train a binary classifier on two playlists represented as tensors *)
-  let train (p1: playlist) (p2: playlist) : t =
+  let train (c: hyperparameters) (p1: playlist) (p2: playlist) : t =
     let x, y = match p1, p2 with
       | {features = features1; _}, {features = features2; _} 
         -> Array.init (Np.size ~axis:0 features1) ~f:(fun _ -> -1) |> fun (arr1) 
            -> (Np.append ~axis:0 ~arr:features1 () ~values:features2), 
               (Array.append arr1 @@ Array.init (Np.size ~axis:0 features2) ~f:(fun _ -> 1) 
                |> Np.Ndarray.of_int_array)
-    in let clf = LinearSVC.create ~c:1.0 ~dual:false () 
+    in let clf = LinearSVC.create ~c ~dual:false () 
     in match p1, p2 with 
     | {name = class1; _}, {name = class2; _} 
       -> {hyperplane = (LinearSVC.fit clf ~x ~y |> fun (svc) 
