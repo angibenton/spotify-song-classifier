@@ -4,6 +4,9 @@ open Sklearn.Svm
 open Core
 open Machine_learning
 
+type svm = {hyperplane: Np.Ndarray.t; class1: string; class2: string}
+
+
 module SVM_Model = struct
   (* the model *)
   type t = svm

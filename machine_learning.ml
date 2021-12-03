@@ -6,8 +6,6 @@ type song = {name: string; id: string; features: Np.Ndarray.t;}
 
 type playlist = {name: string; id: string; features: Np.Ndarray.t;}
 
-type svm = {hyperplane: Np.Ndarray.t; class1: string; class2: string}
-
 type confusion_matrix = {tp: int; fp: int; tn: int; fn: int}
 
 module type Model = sig 
@@ -33,6 +31,8 @@ module type Classification = sig
   val classify : t -> song -> string
   (* return the confusion matrix from testing the model on a tensor of labeled songs *)
   val test : t -> playlist -> playlist -> confusion_matrix
+  (* format the confusion matrix to be printed *)
+  val pretty_confusion : confusion_matrix -> string
   (* calculate the accuracy of a test result confusion matrix *)
   val accuracy : confusion_matrix -> float
   (* calculate the F1 Score of a test result confusion matrix *)
@@ -60,9 +60,58 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
       {features = posFeatures; _}, {features = negFeatures; _} -> 
       let tp = test_sample_i c posFeatures 0 0
       in let fp = test_sample_i c negFeatures 0 0
-      in let fn = Np.size ~axis:0 posFeatures
-      in let tn = Np.size ~axis:0 negFeatures
-      in {tp; fp; fn; tn}
+      in let fn = Np.size ~axis:0 posFeatures - tp
+      in let tn = Np.size ~axis:0 negFeatures - fp
+      in Printf.printf "%d%d%d%d" tp fp fn tn; {tp; fp; fn; tn}
+
+  let pretty_confusion (cm: confusion_matrix) : string =
+
+    let (tp, fp, tn, fn) = match cm with 
+      | {tp; fp; tn; fn} -> (tp, fp, tn, fn)
+
+    in let padding = (fun(_) -> ' ')
+    in let left_margin = String.init 10 ~f:padding
+
+    in let margin = left_margin ^ String.init 4 ~f:padding
+
+    in let digits (n: int) : int =
+        match n with
+        | 0 -> 1
+        | _ -> Float.of_int n |> Float.log10 |> fun(res) -> Int.of_float res + 1
+
+    in let max_width = List.fold_left (tp :: fp :: tn :: fn :: [])
+           ~f:(fun max curr -> if curr > max then curr else max) 
+           ~init:Int.min_value |> digits
+
+    in let spaced_int (n: int) : string =
+         String.init (max_width - digits n) ~f:padding ^ Int.to_string n
+
+    in let total_width = max_width * 2 + 7 
+
+    in let line = String.init total_width ~f:(fun (_) -> '-') ^ "\n"
+
+    in let row_1 = 
+         let spacing = String.init ((total_width - 6) / 2)  ~f:padding
+         in margin ^ spacing ^ "actual " ^ spacing ^ "\n"
+
+    in let row_2 = 
+         let size = (total_width - 6) / 3
+         in let base_spacing = String.init size ~f:padding
+         in let extra_spacing = String.init (size + 1) ~f:padding
+         in margin ^ (match (total_width - 6) % 3 with 
+             | 0 -> base_spacing ^ "pos" ^ base_spacing ^ "neg" ^ base_spacing
+             | 1 -> base_spacing ^ "pos" ^ extra_spacing ^ "neg" ^ base_spacing
+             | 2 -> extra_spacing ^ "pos" ^ base_spacing ^ "neg" ^ extra_spacing
+             | _ -> assert false) ^ "\n"
+
+    in let row_3 = margin ^ line
+    in let row_4 = left_margin ^ "pos" ^ " | " ^ (spaced_int tp) ^ " | " ^ (spaced_int fp) ^ " |\n" 
+
+    in let row_5 = "predicted     " ^ line
+    in let row_6 = left_margin ^ "neg" ^ " | " ^ (spaced_int fn) ^ " | " ^ (spaced_int tn) ^ " |\n" 
+    in let row_7 = margin ^ line
+    in row_1 ^ row_2 ^ row_3 ^ row_4 ^ row_5 ^ row_6 ^ row_7
+
 
   let accuracy (cm: confusion_matrix) : float =
     match cm with 
