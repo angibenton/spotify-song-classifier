@@ -5,9 +5,9 @@ open Spotify
 
 (* TESTER FOR THE SPOTIFY MODULE *)
 
-type song = {name: string; id: string; features: Np.Ndarray.t;}
+type song = {name: string; sid: string; features_vector: Np.Ndarray.t;}
 
-type playlist = {name: string; id: string; features: Np.Ndarray.t;}
+type playlist = {name: string; pid: string; features_matrix: Np.Ndarray.t;}
 
 module type Spotify = sig 
   (* Generate a (PROMISE OF) new api token to be used for song_of_id and playlist_of_id. Expires in one hour. *)
@@ -20,14 +20,14 @@ end
 
 let print_song (s: song): _ = 
   printf "name: %s\n" s.name;
-  printf "id: %s\n" s.id;
-  printf "features: %s\n" @@ Np.Ndarray.to_string s.features; 
+  printf "id: %s\n" s.sid;
+  printf "features: %s\n" @@ Np.Ndarray.to_string s.features_vector; 
 ;;
 
 let print_playlist (p: playlist): _ = 
   printf "name: %s\n" p.name;
-  printf "id: %s\n" p.id;
-  printf "features: %s\n" @@ Np.Ndarray.to_string p.features; 
+  printf "id: %s\n" p.pid;
+  printf "features: %s\n" @@ Np.Ndarray.to_string p.features_matrix; 
 ;;
 
 let () =

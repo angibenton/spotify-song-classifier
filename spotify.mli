@@ -1,8 +1,8 @@
 module Np = Np.Numpy
 
-type song = {name: string; id: string; features: Np.Ndarray.t;}
+type song = {name: string; sid: string; features_vector: Np.Ndarray.t;}
 
-type playlist = {name: string; id: string; features: Np.Ndarray.t;}
+type playlist = {name: string; pid: string; features_matrix: Np.Ndarray.t;}
 
 module type Spotify = sig 
   (* Generate a (PROMISE OF) new api token to be used for song_of_id and playlist_of_id. Expires in one hour. *)
