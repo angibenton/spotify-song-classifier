@@ -4,11 +4,6 @@ open Cohttp
 open Cohttp_lwt_unix
 module Np = Np.Numpy
 
-let spotify_api_credentials = "ZDgwMGZlMzgwOTAwNGRjZGI1NmViZTkwYjg2ZThlNzQ6ZGM0OTdiMWM2MjAwNDY1Y2JlZmYyNWE5ODhkY2YxYzk=";;
-let spotify_base_uri = "https://api.spotify.com/v1/";;
-let token_request_timeout = 20.;; 
-let data_request_timeout = 30.;;
-
 type song = {name: string; sid: string; features_vector: Np.Ndarray.t;}
 
 type playlist = {name: string; pid: string; features_matrix: Np.Ndarray.t;}
@@ -30,17 +25,21 @@ let feature_names = [
 ]
 ;;
 
-module type Spotify = sig 
+let spotify_api_credentials = "ZDgwMGZlMzgwOTAwNGRjZGI1NmViZTkwYjg2ZThlNzQ6ZGM0OTdiMWM2MjAwNDY1Y2JlZmYyNWE5ODhkY2YxYzk=";;
+let spotify_base_uri = "https://api.spotify.com/v1/";;
+let token_request_timeout = 20.;; 
+let data_request_timeout = 30.;;
+
+module type Spotify_api = sig 
   (* Generate a (PROMISE OF) new api token to be used for song_of_id and playlist_of_id. Expires in one hour. *)
   val get_new_api_token : _ -> string Lwt.t
   (* Use a song id & access token to query spotify for song data and convert the result to (PROMISE OF) a song object *)
   val song_of_id : string -> string -> song Lwt.t
   (* Use a playlist id & access token to query spotify for playlist data and convert the result to (PROMISE OF) a playlist object *)
-  val playlist_of_id : string -> string-> playlist Lwt.t
+  val playlist_of_id : string -> string -> playlist Lwt.t
 end
 
-
-module Spotify : Spotify = struct
+module Spotify_api : Spotify_api = struct
   (* --------- HELPERS - HIDDEN ---------- *)
 
   (* Returns a promise that will resolve the way f resolves, or with timeout *)
@@ -190,7 +189,7 @@ module Spotify : Spotify = struct
     |> List.map ~f:(String.filter ~f:(fun c -> Char.(<>) c '"'))
     |> String.concat ~sep:"," 
 
-    
+
   (* --------- EXPOSED API --------- *)
 
   let get_new_api_token _ : string Lwt.t = 

@@ -4,11 +4,11 @@ open Svm
 
 let playlist_of_id = fun (s) ->
   match s with
-  | "1" ->{name = "the first one"; id = "123"; 
-           features = (Np.matrixf [| [| -1.; -1. |]; [| -2.; -1. |]; [| 4.; 3.2|]; [| 2.; 1. |] |])}
-  | _ -> {name = "the second one"; id = "124"; features = (Np.matrixf [| [| -5.; -5. |];  |])}
+  | "1" ->{name = "the first one"; pid = "123"; 
+           features_matrix = (Np.matrixf [| [| -1.; -1. |]; [| -2.; -1. |]; [| 4.; 3.2|]; [| 2.; 1. |] |])}
+  | _ -> {name = "the second one"; pid = "124"; features_matrix = (Np.matrixf [| [| -5.; -5. |];  |])}
 
-let song_of_id _ : song = {features = Np.vectorf [| -5.; -5. |]; name = "hi"; id = "h"}
+let song_of_id _ : song = {features_vector = Np.vectorf [| -5.; -5. |]; name = "hi"; sid = "h"}
 
 let train = 
   Command.basic
