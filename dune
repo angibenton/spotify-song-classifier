@@ -3,28 +3,34 @@
  (modules machine_learning)
  (preprocess
   (pps ppx_let))
- (libraries core sklearn)
- (modules_without_implementation spotify))
+ (libraries core sklearn))
 
 (library
  (name svm)
  (modules svm)
  (preprocess
   (pps ppx_let))
- (libraries core sklearn machine_learning)
- (modules_without_implementation spotify))
+ (libraries core sklearn machine_learning))
+
+(library
+ (name spotify)
+ (modules spotify)
+ (preprocess 
+  (pps ppx_deriving_yojson ppx_let lwt_ppx))
+ (libraries core sklearn cohttp-lwt-unix lwt yojson ppx_deriving_yojson.runtime))
 
 (executables
- (names torch_example http_example run)
- (modules torch_example http_example run)
+ (names torch_example http_example run test_spotify)
+ (modules torch_example http_example run test_spotify)
  (libraries
   svm
+  spotify
   core
   torch
   cohttp-lwt-unix
+  lwt 
   sklearn
   yojson
   ppx_deriving_yojson.runtime)
  (preprocess
-  (pps ppx_deriving_yojson ppx_let))
- (modules_without_implementation spotify))
+  (pps ppx_deriving_yojson ppx_let lwt_ppx)))
