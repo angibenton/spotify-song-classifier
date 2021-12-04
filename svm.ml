@@ -37,7 +37,7 @@ module SVM_Model = struct
   (* train a binary classifier on two playlists represented as tensors *)
   let train (c: hyperparameters) (p1: playlist) (p2: playlist) : t =
     let x, y = match p1, p2 with
-      | {features = features1; _}, {features = features2; _} 
+      | {features_matrix = features1; _}, {features_matrix = features2; _} 
         -> Array.init (Np.size ~axis:0 features1) ~f:(fun _ -> -1) |> fun (arr1) 
            -> (Np.append ~axis:0 ~arr:features1 () ~values:features2), 
               (Array.append arr1 @@ Array.init (Np.size ~axis:0 features2) ~f:(fun _ -> 1) 

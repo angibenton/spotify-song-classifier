@@ -45,8 +45,8 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
   (* classify a song represented by a vector into one of the two playlists true = first, false = second *)
   let classify (c: t) (s: song) : string =
     match Classifier.classes c, s with 
-    | (class1, class2), {features; _} 
-      -> if Classifier.predict c features then class1 else class2
+    | (class1, class2), {features_vector; _} 
+      -> if Classifier.predict c features_vector then class1 else class2
 
   let row (matrix: Np.Ndarray.t) (index: int) : Np.Ndarray.t =
     Np.Ndarray.get ~key:[Np.slice ~i:index ~j:(index + 1) (); Np.slice ~i:0 ~j:(Np.size ~axis:1 matrix) ()] matrix
@@ -57,7 +57,7 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
 
   let test (c: t) (pos: playlist) (neg: playlist) : confusion_matrix =
     match pos, neg with 
-      {features = posFeatures; _}, {features = negFeatures; _} -> 
+      {features_matrix = posFeatures; _}, {features_matrix = negFeatures; _} -> 
       let tp = test_sample_i c posFeatures 0 0
       in let fp = test_sample_i c negFeatures 0 0
       in let fn = Np.size ~axis:0 posFeatures - tp
