@@ -30,8 +30,8 @@ let train =
         |> fun (p1, p2) -> Stdio.print_string "Training model…\n"; 
         SVM_Model.train c p1 p2 
         |> fun (svm) -> Stdio.print_string @@ "Saving model to " ^ filename ^ "...\n"; 
-                                    SVM_Model.save svm filename
-                                    |> fun () -> Stdio.print_string "Saved model.\n")
+        SVM_Model.save svm filename
+        |> fun () -> Stdio.print_string "Saved model.\n")
 let classify =
   Command.basic
     ~summary:"Classify a song based on an existing model"
@@ -53,9 +53,9 @@ let test =
       let%map_open model = flag "--model-file" (required Filename.arg_type)
           ~doc:" The file location to retrieve the model"
       and pos_id = flag "--pos-id" (required string)
-      ~doc:" The positive test playlist id"
+          ~doc:" The positive test playlist id"
       and neg_id = flag "--neg-id" (required string)
-      ~doc:" The negative test playlist id"
+          ~doc:" The negative test playlist id"
       in
       fun () -> 
         Stdio.print_string "Loading positive test playlist…\n"; 
@@ -63,8 +63,13 @@ let test =
         |> fun pos -> Stdio.print_string "Loading negative test playlist…\n"; 
         (pos, playlist_of_id neg_id) 
         |> fun (pos, neg) -> Stdio.print_string @@ "Loading model from " ^ model ^ "...\n";
-      SVM_Model.load model |> fun (svm) -> Stdio.print_string @@ "Classifying test examples...\n";  SVM_Classification.test svm pos neg
-        |> fun(cm) -> Stdio.print_string @@ "Confusion matrix: \n" ^ SVM_Classification.pretty_confusion cm |> fun () -> Stdio.printf "Accuracy is %f.\n" @@ SVM_Classification.accuracy cm |> fun () -> Stdio.printf "F1 score is %f.\n" @@ SVM_Classification.f1_score cm 
+        SVM_Model.load model |> fun (svm) -> Stdio.print_string @@ "Classifying test examples...\n";
+        SVM_Classification.test svm pos neg |> fun(cm) -> Stdio.print_string 
+        @@ "Confusion matrix: \n" ^ SVM_Classification.pretty_confusion cm 
+                                                          |> fun () -> Stdio.printf "Accuracy is %f.\n" 
+                                                          @@ SVM_Classification.accuracy cm 
+                                                                       |> fun () -> Stdio.printf "F1 score is %f.\n" 
+                                                                       @@ SVM_Classification.f1_score cm 
     )
 
 let command =

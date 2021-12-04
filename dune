@@ -1,36 +1,13 @@
-(library
- (name machine_learning)
- (modules machine_learning)
- (preprocess
-  (pps ppx_let))
- (libraries core sklearn))
-
-(library
- (name svm)
- (modules svm)
- (preprocess
-  (pps ppx_let))
- (libraries core sklearn machine_learning))
-
-(library
- (name spotify)
- (modules spotify)
- (preprocess 
-  (pps ppx_deriving_yojson ppx_let lwt_ppx))
- (libraries core sklearn cohttp-lwt-unix lwt yojson ppx_deriving_yojson.runtime))
-
-(executables
- (names torch_example run test_spotify)
- (modules torch_example run test_spotify)
- (libraries
-  svm
-  spotify
-  core
-  torch
-  cohttp-lwt-unix
-  lwt 
-  sklearn
-  yojson
-  ppx_deriving_yojson.runtime)
- (preprocess
-  (pps ppx_deriving_yojson ppx_let lwt_ppx)))
+(rule
+ (target final.zip)
+ (deps
+  src/machine_learning.ml
+  src/svm.ml
+  src/spotify.ml
+  src/run.ml
+  src/test_spotify.ml
+  src/dune
+  tests/tests.ml
+  tests/dune)
+ (action
+  (run zip -R final.zip %{deps})))

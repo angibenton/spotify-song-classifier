@@ -60,23 +60,10 @@ module SVM_Model = struct
   let predict (svc: t) (features: Np.Ndarray.t) : bool =
     match svc with 
     | {hyperplane; _} ->Float.(>) 0. @@ predict_score hyperplane features
-  
+
   let classes (svc: t) : string * string = 
     match svc with
     | {class1; class2; _} -> (class1, class2)
 end 
 
 module SVM_Classification = Classification(SVM_Model)
-
-(*let () = 
-  let playlist1 = {name = "the first one"; id = "123"; 
-                   features = (Np.matrixf [| [| -1.; -1. |]; [| -2.; -1. |]; [| 4.; 3.2|]; [| 2.; 1. |] |])}
-  in let playlist2 = {name = "the second one"; id = "124"; 
-                      features = (Np.matrixf [| [| -1.; -1. |];  |])}
-  in let classifier = SVM_Model.train playlist1 playlist2
-  in SVM_Model.save classifier "TestSVM.txt";
-  let perf = SVM_Classification.test classifier playlist1 playlist2 
-  in Printf.printf "Training accuracy: %f" @@ SVM_Classification.accuracy perf;
-  Printf.printf "Training F1 Score: %f" @@ SVM_Classification.f1_score perf;
-  SVM_Model.load "TestSVM.txt" |> fun (svc) -> Printf.printf "%s"
-  @@ SVM_Classification.classify svc {features = Np.vectorf [| 2.; 1. |]; name = "hi"; id = "h"}*)

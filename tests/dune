@@ -1,0 +1,13 @@
+(test
+ (name tests)
+ (libraries
+  core
+  ounit2
+  svm
+  spotify
+  torch
+  cohttp-lwt-unix
+  lwt
+  sklearn
+  yojson
+  ppx_deriving_yojson.runtime))

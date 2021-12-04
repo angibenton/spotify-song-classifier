@@ -62,7 +62,7 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
       in let fp = test_sample_i c negFeatures 0 0
       in let fn = Np.size ~axis:0 posFeatures - tp
       in let tn = Np.size ~axis:0 negFeatures - fp
-      in Printf.printf "%d%d%d%d" tp fp fn tn; {tp; fp; fn; tn}
+      in {tp; fp; fn; tn}
 
   let pretty_confusion (cm: confusion_matrix) : string =
 
@@ -75,9 +75,9 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
     in let margin = left_margin ^ String.init 4 ~f:padding
 
     in let digits (n: int) : int =
-        match n with
-        | 0 -> 1
-        | _ -> Float.of_int n |> Float.log10 |> fun(res) -> Int.of_float res + 1
+         match n with
+         | 0 -> 1
+         | _ -> Float.of_int n |> Float.log10 |> fun(res) -> Int.of_float res + 1
 
     in let max_width = List.fold_left (tp :: fp :: tn :: fn :: [])
            ~f:(fun max curr -> if curr > max then curr else max) 
