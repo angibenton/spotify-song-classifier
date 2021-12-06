@@ -2,6 +2,9 @@ open Core
 open OUnit2
 open Machine_learning
 open Svm
+(*module Np = Np.Numpy*)
+open Spotify
+
 let pretty_confusion_1 = "               actual  
                pos neg 
               ---------
@@ -40,6 +43,21 @@ let machine_learning_tests =
   "Machine Learning" >: test_list [
     "Pretty Confusion" >:: test_pretty_confusion;
   ]
+
+let test_get_token _ = 
+  let test_monadic = 
+    let%lwt _token = Spotify_api.get_new_api_token () in
+    printf "bullshit";
+    Lwt.return true; 
+  in
+  assert_equal true @@ Lwt_main.run test_monadic;  
+;;
+
+let spotify_api_tests = 
+    "Spotify API Tests" >: test_list [
+      "Get Token" >:: test_get_token; 
+    ]
+
 
 let series =
   "Final Project Tests" >::: [

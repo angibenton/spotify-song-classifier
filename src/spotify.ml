@@ -131,7 +131,7 @@ module Spotify_api : Spotify_api = struct
 
 
   let request_song_features_batch (ids_comma_sep: string) (api_token: string): string t = 
-    let uri_suffix = "audio-features/?ids=" ^ ids_comma_sep ^ "?market=ES" in
+    let uri_suffix = "audio-features/?ids=" ^ ids_comma_sep in
     let description = "request batch of song ids" in
     general_api_request uri_suffix description api_token
 
@@ -201,8 +201,11 @@ module Spotify_api : Spotify_api = struct
     let%lwt playlist_body = request_playlist_metadata pid api_token in
     let name = get_field_remove_quotes "name" playlist_body in
     let ids = ids_from_playlist_body playlist_body in
+    printf "\nplaylist ids: %s\n" ids;
     let%lwt batch_body = request_song_features_batch ids api_token in
     let features_matrix = batch_body |> Yojson.Safe.from_string |> playlist_features_yojson_to_matrix in
+    printf "\nfeatures_matrix shape: ";
+    Array.iter (Np.shape features_matrix) ~f:(fun i -> printf "%d " i); 
     Lwt.return {name; pid; features_matrix;}
 
   let song_of_id (sid: string) (api_token: string): song Lwt.t =
