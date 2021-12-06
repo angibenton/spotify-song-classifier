@@ -27,8 +27,8 @@ let feature_names = [
 
 let spotify_api_credentials = "ZDgwMGZlMzgwOTAwNGRjZGI1NmViZTkwYjg2ZThlNzQ6ZGM0OTdiMWM2MjAwNDY1Y2JlZmYyNWE5ODhkY2YxYzk=";;
 let spotify_base_uri = "https://api.spotify.com/v1/";;
-let token_request_timeout = 20.;; 
-let data_request_timeout = 30.;;
+let token_request_timeout = 10.;; 
+let data_request_timeout = 10.;;
 
 module type Spotify_api = sig 
   (* Generate a (PROMISE OF) new api token to be used for song_of_id and playlist_of_id. Expires in one hour. *)
@@ -42,7 +42,6 @@ end
 module Spotify_api : Spotify_api = struct
   (* --------- HELPERS - HIDDEN ---------- *)
 
-  (* Returns a promise that will resolve the way f resolves, or with timeout *)
   let get_promise_with_timeout ~time ~f =
     Lwt.pick
       [
@@ -80,7 +79,7 @@ module Spotify_api : Spotify_api = struct
 
   let request_token_return_body () : string t = 
     get_promise_with_timeout ~time:token_request_timeout ~f:send_token_request >>= function
-    | `Timeout -> Lwt.fail_with "Timeout expired"
+    | `Timeout -> Lwt.fail_with "Request for token failed: timeout expired"
     | `Done (resp, body) -> handle_token_response_get_body resp body 
 
 
@@ -108,7 +107,7 @@ module Spotify_api : Spotify_api = struct
         Cohttp_lwt.Body.to_string body                                                                
     in
     get_promise_with_timeout ~f:do_request ~time:data_request_timeout >>= (function 
-      | `Timeout -> Lwt.fail_with @@ description ^ " failed: timeout" 
+      | `Timeout -> Lwt.fail_with @@ description ^ " failed: timeout expired" 
       | `Done (resp, body) -> handle_response resp body 
     )
 
@@ -201,11 +200,8 @@ module Spotify_api : Spotify_api = struct
     let%lwt playlist_body = request_playlist_metadata pid api_token in
     let name = get_field_remove_quotes "name" playlist_body in
     let ids = ids_from_playlist_body playlist_body in
-    printf "\nplaylist ids: %s\n" ids;
     let%lwt batch_body = request_song_features_batch ids api_token in
     let features_matrix = batch_body |> Yojson.Safe.from_string |> playlist_features_yojson_to_matrix in
-    printf "\nfeatures_matrix shape: ";
-    Array.iter (Np.shape features_matrix) ~f:(fun i -> printf "%d " i); 
     Lwt.return {name; pid; features_matrix;}
 
   let song_of_id (sid: string) (api_token: string): song Lwt.t =
