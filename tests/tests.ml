@@ -2,8 +2,6 @@ open Core
 open OUnit2
 open Machine_learning
 open Svm
-(*module Np = Np.Numpy*)
-open Spotify
 
 let cm_1 = {tp = 5; fp = 0; fn = 6; tn = 4};;
 let cm_2 = {tp = 5543; fp = 5; fn = 5852; tn = 314};;
