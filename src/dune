@@ -30,6 +30,7 @@
   cohttp-lwt-unix
   lwt 
   sklearn
+  ounit2
   yojson
   ppx_deriving_yojson.runtime)
  (preprocess

@@ -21,3 +21,9 @@ $ source .venv/bin/activate \
 $ [use spotify-song-classifier as desired] \
 $ deactivate  
 
+## Testing
+To unit test most of the functionality, run \
+$ dune test \ 
+To test the spotify API functionality, run \
+$ dune build \ 
+$ dune exec ./src/test_spotify.exe 

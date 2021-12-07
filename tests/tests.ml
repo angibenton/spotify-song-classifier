@@ -2,7 +2,6 @@ open Core
 open OUnit2
 open Machine_learning
 open Svm
-(*module Np = Np.Numpy*)
 open Spotify
 
 let float_equals_epsilon = fun f1 f2 -> Float.(-) f1 f2 
@@ -94,21 +93,6 @@ let machine_learning_tests =
     "Pretty Confusion" >:: test_pretty_confusion;
     "Accuracy" >:: test_acc;
   ]
-
-let test_get_token _ = 
-  let test_monadic = 
-    let%lwt _token = Spotify_api.get_new_api_token () in
-    printf "bullshit";
-    Lwt.return true; 
-  in
-  assert_equal true @@ Lwt_main.run test_monadic;  
-;;
-
-let spotify_api_tests = 
-    "Spotify API Tests" >: test_list [
-      "Get Token" >:: test_get_token; 
-    ]
-
 
 let series =
   "Final Project Tests" >::: [
