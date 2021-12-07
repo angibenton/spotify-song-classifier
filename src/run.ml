@@ -1,6 +1,7 @@
 open Core
 open Machine_learning
 open Svm
+open Spotify
 
 let playlist_of_id = fun (s) ->
   match s with

@@ -1,10 +1,7 @@
 module Np = Np.Numpy
 
 open Core
-
-type song = {name: string; sid: string; features_vector: Np.Ndarray.t;}
-
-type playlist = {name: string; pid: string; features_matrix: Np.Ndarray.t;}
+open Spotify
 
 type confusion_matrix = {tp: int; fp: int; tn: int; fn: int}
 

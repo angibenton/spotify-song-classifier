@@ -3,8 +3,9 @@ module Np = Np.Numpy
 open Sklearn.Svm
 open Core
 open Machine_learning
+open Spotify
 
-type svm = {hyperplane: Np.Ndarray.t; class1: string; class2: string}
+type svm = {hyperplane: Np.Ndarray.t; intercept: float; class1: string; class2: string}
 
 
 module SVM_Model = struct
@@ -17,8 +18,8 @@ module SVM_Model = struct
   let save (svc: t) (file: string) : unit = 
     let f = Stdio.Out_channel.create file
     in match svc with |
-      {hyperplane; class1; class2} 
-      -> Stdio.Out_channel.output_string f (class1 ^ "\n" ^ class2 ^ "\n" ^ 
+      {hyperplane; intercept; class1; class2} 
+      -> Stdio.Out_channel.output_string f (class1 ^ "\n" ^ class2 ^ "\n" ^ Float.to_string intercept ^ "\n" ^
                                             (Array.fold (Np.Ndarray.to_float_array hyperplane) 
                                                ~init:"" ~f:(fun s v -> s ^ " " ^ Float.to_string v)));
       Stdio.Out_channel.flush f;
@@ -28,11 +29,11 @@ module SVM_Model = struct
   (* open up a model file with a given filename, parse a model object from it *)
   let load (file: string) : t =
     match Stdio.In_channel.read_lines file with 
-    | class1 :: class2 :: arr :: [] -> String.split ~on:' ' arr 
+    | class1 :: class2 :: intercept ::arr :: [] -> String.split ~on:' ' arr 
                                        |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
                                        |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 
-                                       |> fun (hyperplane) -> {hyperplane; class1; class2;}
-    | some -> List.iter some ~f:(Printf.printf "%s"); {hyperplane=(Np.Ndarray.of_int_list [2]); class1 ="l"; class2="f"}
+                                       |> fun (hyperplane) -> {hyperplane; intercept = Float.of_string intercept; class1; class2;}
+    | _ -> failwith "improper file formatting"
 
   (* train a binary classifier on two playlists represented as tensors *)
   let train (c: hyperparameters) (p1: playlist) (p2: playlist) : t =
@@ -45,21 +46,18 @@ module SVM_Model = struct
     in let clf = LinearSVC.create ~c ~dual:false () 
     in match p1, p2 with 
     | {name = class1; _}, {name = class2; _} 
-      -> {hyperplane = (LinearSVC.fit clf ~x ~y |> fun (svc) 
-                        -> Np.append ~arr:(LinearSVC.coef_ svc) () 
-                          ~values:(LinearSVC.intercept_ svc)); class1; class2}
+      -> LinearSVC.fit clf ~x ~y |> fun svc -> {hyperplane = (LinearSVC.coef_ svc); 
+  intercept=(Array.get (Np.Ndarray.to_float_array @@ LinearSVC.intercept_ svc) 0); class1; class2}
 
-  let predict_score (hyperplane: Np.Ndarray.t) (features: Np.Ndarray.t) : float =
-    let normalize = Np.Ndarray.get ~key:[Np.slice ~i:0 ~j:12 ();] hyperplane 
-                    |> fun (coef) -> Np.dot coef ~b:coef |> Np.Ndarray.to_float_array
+  let predict_score (hyperplane: Np.Ndarray.t) (intercept: float) (features: Np.Ndarray.t) : float =
+    let normalize = Np.dot hyperplane ~b:hyperplane |> Np.Ndarray.to_float_array
                                      |> fun (arr) -> Array.get arr 0 |> Float.sqrt
-    in Float.(/) (Array.get (Np.Ndarray.to_float_array @@ 
-                             Np.dot ~b:(Np.append ~arr:features () 
-                                          ~values:(Np.vectori [|1|])) hyperplane) 0) normalize
+    in Float.(/) (Float.(+) intercept @@ Array.get (Np.Ndarray.to_float_array @@ 
+                             Np.dot ~b:features hyperplane) 0) normalize
 
   let predict (svc: t) (features: Np.Ndarray.t) : bool =
     match svc with 
-    | {hyperplane; _} ->Float.(>) 0. @@ predict_score hyperplane features
+    | {hyperplane; intercept; _} ->Float.(>) 0. @@ predict_score hyperplane intercept features
 
   let classes (svc: t) : string * string = 
     match svc with
