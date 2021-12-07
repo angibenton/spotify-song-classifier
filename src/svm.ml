@@ -5,12 +5,9 @@ open Core
 open Machine_learning
 open Spotify
 
-type svm = {hyperplane: Np.Ndarray.t; intercept: float; class1: string; class2: string}
-
-
 module SVM_Model = struct
   (* the model *)
-  type t = svm
+  type t = {hyperplane: Np.Ndarray.t; intercept: float; class1: string; class2: string}
 
   type hyperparameters = float
 
@@ -39,9 +36,9 @@ module SVM_Model = struct
   let train (c: hyperparameters) (p1: playlist) (p2: playlist) : t =
     let x, y = match p1, p2 with
       | {features_matrix = features1; _}, {features_matrix = features2; _} 
-        -> Array.init (Np.size ~axis:0 features1) ~f:(fun _ -> -1) |> fun (arr1) 
+        -> Array.init (Np.size ~axis:0 features1) ~f:(fun _ -> 1) |> fun (arr1) 
            -> (Np.append ~axis:0 ~arr:features1 () ~values:features2), 
-              (Array.append arr1 @@ Array.init (Np.size ~axis:0 features2) ~f:(fun _ -> 1) 
+              (Array.append arr1 @@ Array.init (Np.size ~axis:0 features2) ~f:(fun _ -> -1) 
                |> Np.Ndarray.of_int_array)
     in let clf = LinearSVC.create ~c ~dual:false () 
     in match p1, p2 with 
@@ -57,7 +54,7 @@ module SVM_Model = struct
 
   let predict (svc: t) (features: Np.Ndarray.t) : bool =
     match svc with 
-    | {hyperplane; intercept; _} ->Float.(>) 0. @@ predict_score hyperplane intercept features
+    | {hyperplane; intercept; _} ->Float.(<=) 0. @@ predict_score hyperplane intercept features
 
   let classes (svc: t) : string * string = 
     match svc with
