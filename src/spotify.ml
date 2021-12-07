@@ -29,6 +29,8 @@ let data_request_timeout = 10.;;
 
 (* --------- HELPERS - HIDDEN ---------- *)
 
+(* --------- GENERAL NETWORK FUNCTIONS ---------- *)
+
 let get_promise_with_timeout ~time ~f =
   Lwt.pick
     [
@@ -36,17 +38,15 @@ let get_promise_with_timeout ~time ~f =
     ; (Lwt_unix.sleep time >|= fun () -> `Timeout)
     ]
 
+  let get_error_msg (body: string): string = 
+    body 
+    |> Yojson.Safe.from_string 
+    |> Yojson.Safe.Util.member "error"
+    |> Yojson.Safe.Util.member "message"
+    |> Yojson.Safe.to_string
+    |> String.filter ~f:(fun c -> Char.(<>) c '"') 
+
 (* ------- ACCESS TOKEN NETWORK FUNCTIONS ------- *)
-
-
-let get_error_msg (body: string): string = 
-  body 
-  |> Yojson.Safe.from_string 
-  |> Yojson.Safe.Util.member "error"
-  |> Yojson.Safe.Util.member "message"
-  |> Yojson.Safe.to_string
-  |> String.filter ~f:(fun c -> Char.(<>) c '"') 
-
 
 let send_token_request (): (Response.t * Cohttp_lwt.Body.t) t = 
   let uri = Uri.of_string "https://accounts.spotify.com/api/token?grant_type=client_credentials" in
@@ -98,7 +98,6 @@ let general_api_request (uri_suffix: string) (description: string) (api_token: s
       | `Done (resp, body) -> handle_response resp body 
     )
 
-
 let request_song_metadata (id: string) (api_token: string): string t = 
   let uri_suffix = "tracks/" ^ id in
   let description = "request metadata for song (id = " ^ id ^ ")" in
@@ -111,7 +110,7 @@ let request_song_features (id: string) (api_token: string): string t =
 
 
 let request_playlist_metadata (id: string) (api_token: string): string t = 
-  let uri_suffix = "playlists/" ^ id ^ "?market=ES" in
+  let uri_suffix = "playlists/" ^ id in
   let description = "request metadata for playlist (id = " ^ id ^ ")" in
   general_api_request uri_suffix description api_token
 
@@ -122,7 +121,10 @@ let request_song_features_batch (ids_comma_sep: string) (api_token: string): str
   general_api_request uri_suffix description api_token
 
 
-(* -------- Yojson and (Yojson --> Numpy) manipulation -------- *)
+(* -------- Yojson and (Yojson --> Numpy) data manipulation -------- *)
+
+let yojson_list_remove_nulls (ls: Yojson.Safe.t list): Yojson.Safe.t list = 
+  List.filter ~f:(fun elem -> match elem with | `Null -> false | _ -> true) ls
 
 let get_field_remove_quotes (field: string) (obj: string): string = 
   obj 
@@ -160,6 +162,7 @@ let playlist_features_yojson_to_matrix (features_yojson: Yojson.Safe.t): Np.Ndar
   features_yojson
   |> Yojson.Safe.Util.member "audio_features"
   |> yojson_extract_list 
+  |> yojson_list_remove_nulls
   |> List.map ~f:song_features_yojson_to_vector
   |> matrix_of_vector_list
 
@@ -170,6 +173,7 @@ let ids_from_playlist_body (playlist_metadata_body: string): string =
   |> Yojson.Safe.Util.member "items"
   |> yojson_extract_list
   |> List.map ~f:(Yojson.Safe.Util.member "track")
+  |> yojson_list_remove_nulls
   |> List.map ~f:(Yojson.Safe.Util.member "id")
   |> List.map ~f:Yojson.Safe.to_string
   |> List.map ~f:(String.filter ~f:(fun c -> Char.(<>) c '"'))
@@ -199,5 +203,10 @@ let song_of_id (sid: string) (api_token: string): song Lwt.t =
   let%lwt features_body = request_song_features sid api_token in
   let%lwt metadata_body = request_song_metadata sid api_token in
   let name = get_field_remove_quotes "name" metadata_body in
-  let features_vector = features_body |> Yojson.Safe.from_string |> song_features_yojson_to_vector in
-  Lwt.return {name; sid; features_vector;}
+  let features_body_yojson = Yojson.Safe.from_string features_body in 
+  (* fail if this song doesn't have features *)
+  match features_body_yojson with 
+  |`Null -> Lwt.fail_with @@  "song (id = " ^ sid ^ ") does not have audio feature data"
+  | _ -> 
+    let features_vector = song_features_yojson_to_vector features_body_yojson in
+    Lwt.return {name; sid; features_vector;}
