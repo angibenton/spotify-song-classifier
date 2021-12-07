@@ -4,10 +4,6 @@ open Cohttp
 open Cohttp_lwt_unix
 module Np = Np.Numpy
 
-type song = {name: string; sid: string; features_vector: Np.Ndarray.t;}
-
-type playlist = {name: string; pid: string; features_matrix: Np.Ndarray.t;}
-
 let feature_names = [
   "danceability";
   "energy";
@@ -30,16 +26,7 @@ let spotify_base_uri = "https://api.spotify.com/v1/";;
 let token_request_timeout = 10.;; 
 let data_request_timeout = 10.;;
 
-module type Spotify_api = sig 
-  (* Generate a (PROMISE OF) new api token to be used for song_of_id and playlist_of_id. Expires in one hour. *)
-  val get_new_api_token : _ -> string Lwt.t
-  (* Use a song id & access token to query spotify for song data and convert the result to (PROMISE OF) a song object *)
-  val song_of_id : string -> string -> song Lwt.t
-  (* Use a playlist id & access token to query spotify for playlist data and convert the result to (PROMISE OF) a playlist object *)
-  val playlist_of_id : string -> string -> playlist Lwt.t
-end
 
-module Spotify_api : Spotify_api = struct
   (* --------- HELPERS - HIDDEN ---------- *)
 
   let get_promise_with_timeout ~time ~f =
@@ -92,8 +79,8 @@ module Spotify_api : Spotify_api = struct
       let headers = 
         Header.init ()
         |> fun h -> Header.add h "Content-Type" "application/json"
-        |> fun h -> Header.add h "Authorization" ("Bearer " ^ api_token) 
-        |> fun h -> Header.add h "Accept" "application/json"
+                    |> fun h -> Header.add h "Authorization" ("Bearer " ^ api_token) 
+                                |> fun h -> Header.add h "Accept" "application/json"
       in
       Client.call ~headers `GET uri
     in
@@ -101,15 +88,15 @@ module Spotify_api : Spotify_api = struct
       let code = resp |> Response.status |> Code.code_of_status in
       if code <> 200 then
         Cohttp_lwt.Body.to_string body >>= (fun body_str -> 
-          Lwt.fail_with @@ description ^ " failed: " ^ (Int.to_string code) ^ " " ^ (get_error_msg body_str)
-        )
+            Lwt.fail_with @@ description ^ " failed: " ^ (Int.to_string code) ^ " " ^ (get_error_msg body_str)
+          )
       else 
         Cohttp_lwt.Body.to_string body                                                                
     in
     get_promise_with_timeout ~f:do_request ~time:data_request_timeout >>= (function 
-      | `Timeout -> Lwt.fail_with @@ description ^ " failed: timeout expired" 
-      | `Done (resp, body) -> handle_response resp body 
-    )
+        | `Timeout -> Lwt.fail_with @@ description ^ " failed: timeout expired" 
+        | `Done (resp, body) -> handle_response resp body 
+      )
 
 
   let request_song_metadata (id: string) (api_token: string): string t = 
@@ -190,6 +177,10 @@ module Spotify_api : Spotify_api = struct
 
 
   (* --------- EXPOSED API --------- *)
+  type song = {name: string; sid: string; features_vector: Np.Ndarray.t;}
+
+  type playlist = {name: string; pid: string; features_matrix: Np.Ndarray.t;}
+
 
   let get_new_api_token _ : string Lwt.t = 
     let%lwt body = request_token_return_body () in  
@@ -210,4 +201,3 @@ module Spotify_api : Spotify_api = struct
     let name = get_field_remove_quotes "name" metadata_body in
     let features_vector = features_body |> Yojson.Safe.from_string |> song_features_yojson_to_vector in
     Lwt.return {name; sid; features_vector;}
-end

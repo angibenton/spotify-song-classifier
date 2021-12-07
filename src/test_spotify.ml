@@ -1,18 +1,18 @@
 module Np = Np.Numpy
 open Core
-open Spotify 
+open Spotify
 open OUnit2
 
 (* TESTER FOR THE SPOTIFY MODULE *)
 (* makeshift (sequential!) test suite because the dune test setup seems to cause issues with asynch *)
 
-let print_song (s: Spotify.song): _ = 
+let print_song (s: song): _ = 
   printf "name: %s\n" s.name;
   printf "id: %s\n" s.sid;
   printf "features: %s\n" @@ Np.Ndarray.to_string s.features_vector; 
 ;;
 
-let print_playlist (p: Spotify.playlist): _ = 
+let print_playlist (p: playlist): _ = 
   printf "name: %s\n" p.name;
   printf "id: %s\n" p.pid;
   printf "features: %s\n" @@ Np.Ndarray.to_string p.features_matrix; 
@@ -35,7 +35,7 @@ let ill_formed_playlist_id = "MySongId123";;
 
 let test_get_token _ = 
   let test_monadic = 
-    let%lwt token = Spotify_api.get_new_api_token () in
+    let%lwt token = get_new_api_token () in
     (* check if token is well-formed *)
     assert_equal 83 @@ String.length token;
     assert_equal token @@ String.filter ~f:(fun c -> Char.is_alphanum c || Char.(=) c '-' || Char.(=) c '_') token;
@@ -46,9 +46,9 @@ let test_get_token _ =
 
 let test_get_song _ = 
   let test_monadic = 
-    let%lwt token = Spotify_api.get_new_api_token () in
-    let%lwt chain = Spotify_api.song_of_id test_song_id_chain token in
-    let%lwt skylines = Spotify_api.song_of_id test_song_id_skylines token in
+    let%lwt token = get_new_api_token () in
+    let%lwt chain = song_of_id test_song_id_chain token in
+    let%lwt skylines = song_of_id test_song_id_skylines token in
     assert_equal "The Chain - 2004 Remaster" @@ chain.name;
     assert_equal "Skylines and Turnstiles" @@ skylines.name;
     assert_equal test_song_id_chain @@ chain.sid;
@@ -63,8 +63,8 @@ let test_get_song _ =
 
 let test_get_playlist _ = 
   let test_monadic = 
-    let%lwt token = Spotify_api.get_new_api_token () in
-    let%lwt test_playlist = Spotify_api.playlist_of_id test_playlist_id token in
+    let%lwt token = get_new_api_token () in
+    let%lwt test_playlist = playlist_of_id test_playlist_id token in
     assert_equal "TestPlaylist" @@ test_playlist.name;
     assert_equal test_playlist_id @@ test_playlist.pid;
     (* this is my own playlist, definitely has 3 songs *)
@@ -81,13 +81,13 @@ let test_get_playlist _ =
 (* A lot of the exception testing is just indirectly confirming that there is no convention at all for spotify API error messages *)
 
 let test_bad_token_exceptions _ = 
-  let req_song_bad_token _ = Lwt_main.run @@ Spotify_api.song_of_id test_song_id_vienna ill_formed_token in
+  let req_song_bad_token _ = Lwt_main.run @@ song_of_id test_song_id_vienna ill_formed_token in
   assert_raises (Failure ("request features for song (id = " ^ test_song_id_vienna ^ ") failed: 401 Invalid access token")) req_song_bad_token;
-  let req_song_expired_token _ = Lwt_main.run @@ Spotify_api.song_of_id test_song_id_vienna expired_token in
+  let req_song_expired_token _ = Lwt_main.run @@ song_of_id test_song_id_vienna expired_token in
   assert_raises (Failure ("request features for song (id = " ^ test_song_id_vienna ^ ") failed: 401 The access token expired")) req_song_expired_token;
-  let req_play_bad_token _ = Lwt_main.run @@ Spotify_api.playlist_of_id test_playlist_id ill_formed_token in
+  let req_play_bad_token _ = Lwt_main.run @@ playlist_of_id test_playlist_id ill_formed_token in
   assert_raises (Failure ("request metadata for playlist (id = " ^ test_playlist_id ^ ") failed: 401 Invalid access token")) req_play_bad_token;
-  let req_play_expired_token _ = Lwt_main.run @@ Spotify_api.playlist_of_id test_playlist_id expired_token in
+  let req_play_expired_token _ = Lwt_main.run @@ playlist_of_id test_playlist_id expired_token in
   assert_raises (Failure ("request metadata for playlist (id = " ^ test_playlist_id ^ ") failed: 401 The access token expired")) req_play_expired_token;
 ;;
 
@@ -98,16 +98,16 @@ let test_bad_id_exceptions _ =
 
   let req_song_bad_id _ = 
     Lwt_main.run begin
-      let%lwt token = Spotify_api.get_new_api_token () in
-      Spotify_api.song_of_id ill_formed_song_id token
+      let%lwt token = get_new_api_token () in
+      song_of_id ill_formed_song_id token
     end
   in
   assert_raises (Failure ("request features for song (id = " ^ ill_formed_song_id ^ ") failed: 400 invalid request")) req_song_bad_id; 
 
   let req_playlist_bad_id _ = 
     Lwt_main.run begin
-      let%lwt token = Spotify_api.get_new_api_token () in
-      Spotify_api.playlist_of_id ill_formed_playlist_id token
+      let%lwt token = get_new_api_token () in
+      playlist_of_id ill_formed_playlist_id token
     end
   in
   assert_raises (Failure ("request metadata for playlist (id = " ^ ill_formed_playlist_id ^ ") failed: 404 Invalid playlist Id")) req_playlist_bad_id; 
@@ -116,16 +116,16 @@ let test_bad_id_exceptions _ =
 
   let req_song_playlist_id _ = 
     Lwt_main.run begin
-      let%lwt token = Spotify_api.get_new_api_token () in
-      Spotify_api.song_of_id test_playlist_id token
+      let%lwt token = get_new_api_token () in
+      song_of_id test_playlist_id token
     end
   in
   assert_raises (Failure ("request features for song (id = " ^ test_playlist_id ^ ") failed: 404 analysis not found")) req_song_playlist_id; 
 
   let req_playlist_song_id _ = 
     Lwt_main.run begin
-      let%lwt token = Spotify_api.get_new_api_token () in
-      Spotify_api.playlist_of_id test_song_id_skylines token
+      let%lwt token = get_new_api_token () in
+      playlist_of_id test_song_id_skylines token
     end
   in
   assert_raises (Failure ("request metadata for playlist (id = " ^ test_song_id_skylines ^ ") failed: 404 Not found.")) req_playlist_song_id; 

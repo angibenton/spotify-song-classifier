@@ -53,7 +53,7 @@ module SVM_Model = struct
     let normalize = Np.dot hyperplane ~b:hyperplane |> Np.Ndarray.to_float_array
                                      |> fun (arr) -> Array.get arr 0 |> Float.sqrt
     in Float.(/) (Float.(+) intercept @@ Array.get (Np.Ndarray.to_float_array @@ 
-                             Np.dot ~b:features hyperplane) 0) normalize
+                             Np.dot ~b:features (Np.reshape ~newshape:[(Np.Ndarray.size hyperplane); 1] hyperplane)) 0) normalize
 
   let predict (svc: t) (features: Np.Ndarray.t) : bool =
     match svc with 
