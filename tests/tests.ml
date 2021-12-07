@@ -64,21 +64,6 @@ let machine_learning_tests =
     "Accuracy" >:: test_acc;
   ]
 
-let test_get_token _ = 
-  let test_monadic = 
-    let%lwt _token = Spotify_api.get_new_api_token () in
-    printf "bullshit";
-    Lwt.return true; 
-  in
-  assert_equal true @@ Lwt_main.run test_monadic;  
-;;
-
-let spotify_api_tests = 
-    "Spotify API Tests" >: test_list [
-      "Get Token" >:: test_get_token; 
-    ]
-
-
 let series =
   "Final Project Tests" >::: [
     svm_tests;
