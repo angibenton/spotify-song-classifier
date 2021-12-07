@@ -124,7 +124,11 @@ let request_song_features_batch (ids_comma_sep: string) (api_token: string): str
 (* -------- Yojson and (Yojson --> Numpy) data manipulation -------- *)
 
 let yojson_list_remove_nulls (ls: Yojson.Safe.t list): Yojson.Safe.t list = 
-  List.filter ~f:(fun elem -> match elem with | `Null -> false | _ -> true) ls
+  List.filter ~f:(fun elem -> 
+    match elem with 
+    | `Null -> false 
+    | _ -> true) 
+  ls
 
 let get_field_remove_quotes (field: string) (obj: string): string = 
   obj 
