@@ -40,14 +40,26 @@ let download =
                let save ((pos, neg): (playlist * playlist)) : unit = 
                  (if random then (SVM_Classification.randomize pos, 
                                   SVM_Classification.randomize neg) else (pos, neg))
-                 |> fun classes -> (if norm then SVM_Classification.normalize classes else classes)
-                                   |> fun classes -> (if standard 
-                                                      then SVM_Classification.standardize classes else classes) 
-                                                     |> fun classes -> (if balance 
-                                                                        then SVM_Classification.balance_classes classes else classes)
-                                                                       |> fun classes -> SVM_Classification.split classes valid test 
-                                                                                         |> fun d -> Stdio.print_string @@ "Saving dataset to ./datasets/" ^ filename; SVM_Classification.save_dataset d @@ "./datasets/" ^ filename;
-               in (pos, neg) |> save |> fun () -> Stdio.print_string "Saved model.\n"; Lwt.return ();
+                 |> fun classes -> (if norm 
+                                    then SVM_Classification.normalize classes 
+                                    else classes)
+                                   |> fun classes 
+                                   -> (if standard 
+                                       then SVM_Classification.standardize classes 
+                                       else classes) |> fun classes 
+                                      -> (if balance 
+                                          then SVM_Classification.balance_classes 
+                                              classes else classes)
+                                         |> fun classes 
+                                         -> SVM_Classification.split classes valid test 
+                                            |> fun d 
+                                            -> Stdio.print_string 
+                                            @@ "Saving dataset to ./datasets/...\n" 
+                                               ^ filename; 
+                                            SVM_Classification.save_dataset d 
+                                            @@ "./datasets/" ^ filename;
+               in (pos, neg) |> save |> fun () -> Stdio.print_string "Saved dataset.\n"; 
+                  Lwt.return ();
           in Lwt_main.run download_monadic)
 
 let train = 
@@ -71,7 +83,10 @@ let train =
         (match cs with
          | [] -> SVM_Model.train 1.0 d.pos_train d.neg_train
          | c :: [] -> SVM_Model.train c d.pos_train d.neg_train 
-         | _ -> SVM_Model.tune cs d.pos_train d.neg_train |> fun svms -> SVM_Classification.tune svms d.pos_valid d.neg_valid (if String.equal "accuracy" metric then SVM_Classification.accuracy else SVM_Classification.f1_score)) 
+         | _ -> SVM_Model.tune cs d.pos_train d.neg_train 
+                |> fun svms -> SVM_Classification.tune svms d.pos_valid d.neg_valid 
+                  (if String.equal "accuracy" metric 
+                   then SVM_Classification.accuracy else SVM_Classification.f1_score)) 
         |> fun (svm) -> Stdio.print_string @@ "Saving model to " ^ model_file ^ "...\n"; 
         SVM_Model.save svm @@ "./models/" ^ model_file
         |> fun () -> Stdio.print_string "Saved model.\n")
@@ -85,11 +100,17 @@ let classify =
       and song = flag "--song-id" (required string)
           ~doc:" The song id"
       in
-      fun () -> let classify_monadic = Stdio.print_string @@ "Loading model from " ^ "./models/" ^ filename ^ "...\n";
-                  SVM_Model.load @@ "./models/" ^ filename |> fun (svm) -> let%lwt token = get_new_api_token () in 
-                  Stdio.print_string "Loading song..."; let%lwt s = song_of_id song token in  Stdio.print_string "Classifying song...\n"; 
+      fun () -> let classify_monadic = Stdio.print_string 
+                  @@ "Loading model from " ^ "./models/" ^ filename ^ "...\n";
+                  SVM_Model.load @@ "./models/" ^ filename 
+                  |> fun (svm) -> let%lwt token = get_new_api_token () in 
+                  Stdio.print_string "Loading song..."; 
+                  let%lwt s = song_of_id song token 
+                  in Stdio.print_string "Classifying song...\n"; 
                   SVM_Classification.classify svm s
-                  |> fun (p) -> Stdio.print_string @@ "Song classified as a member of \"" ^ p ^ "\""; Lwt.return ();
+                  |> fun (p) -> Stdio.print_string 
+                  @@ "Song classified as a member of \"" ^ p ^ "\""; 
+                  Lwt.return ();
         in Lwt_main.run classify_monadic)
 
 let test =
@@ -105,19 +126,19 @@ let test =
         SVM_Classification.load_dataset @@ "./datasets/" ^ dataset_folder |>
         fun d -> 
         Stdio.print_string @@ "Loading model from " ^ "./models/" ^ model_file ^ "...\n";
-        SVM_Model.load @@ "./models/" ^ model_file |> fun (svm) -> Stdio.print_string @@ "Classifying test examples...\n";
-        SVM_Classification.test svm d.pos_test d.neg_test |> fun(cm) -> Stdio.print_string 
-        @@ "Confusion matrix: \n" ^ SVM_Classification.pretty_confusion cm 
-                                                                        |> fun () -> Stdio.printf "Accuracy is %f.\n" 
-                                                                        @@ SVM_Classification.accuracy cm 
-                                                                                     |> fun () -> Stdio.printf "F1 score is %f.\n" 
-                                                                                     @@ SVM_Classification.f1_score cm; 
-
-
-    )
+        SVM_Model.load @@ "./models/" ^ model_file |> fun (svm) -> Stdio.print_string 
+        @@ "Classifying test examples...\n";
+        SVM_Classification.test svm d.pos_test d.neg_test 
+        |> fun(cm) -> Stdio.print_string @@ "Confusion matrix: \n" 
+                                            ^ SVM_Classification.pretty_confusion cm 
+                      |> fun () -> Stdio.printf "Accuracy is %f.\n" 
+                      @@ SVM_Classification.accuracy cm 
+                                   |> fun () -> Stdio.printf "F1 score is %f.\n" 
+                                   @@ SVM_Classification.f1_score cm;)
 
 let command =
-  Command.group ~summary:"Perform machine learning on any public playlists and songs with the Spotify API"
+  Command.group ~summary:"Perform machine learning on any public playlists
+   and songs with the Spotify API"
     [ "download", download; "train", train
     ; "classify", classify ; "test", test]
 

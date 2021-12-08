@@ -208,9 +208,13 @@ let save_playlist (p: playlist) (file: string) : unit =
 
 let load_playlist (file: string) : playlist =
   match Stdio.In_channel.read_lines file with 
-  | name :: pid :: matrix -> List.filter ~f:(fun s-> not @@ String.is_empty s) matrix |> List.map ~f:(fun row -> String.split ~on:' ' row |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
-                                                                                                                 |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list |> Np.reshape ~newshape:[1; (List.length feature_names)]) |> matrix_of_vector_list |> fun features_matrix ->
-                             {features_matrix; name; pid;}
+  | name :: pid :: matrix 
+    -> List.filter ~f:(fun s-> not @@ String.is_empty s) matrix 
+       |> List.map ~f:(fun row -> String.split ~on:' ' row 
+                                  |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
+                                  |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 
+                                  |> Np.reshape ~newshape:[1; (List.length feature_names)]) 
+       |> matrix_of_vector_list |> fun features_matrix -> {features_matrix; name; pid;}
   | _ -> failwith "improper file formatting"
 
 let replace_features (p: playlist) (f: Np.Ndarray.t) : playlist =

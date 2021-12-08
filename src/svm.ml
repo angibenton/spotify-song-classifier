@@ -16,9 +16,10 @@ module SVM_Model = struct
     let f = Stdio.Out_channel.create file
     in match svc with |
       {hyperplane; intercept; class1; class2} 
-      -> Stdio.Out_channel.output_string f (class1 ^ "\n" ^ class2 ^ "\n" ^ Float.to_string intercept ^ "\n" ^
-                                            (Array.fold (Np.Ndarray.to_float_array hyperplane) 
-                                               ~init:"" ~f:(fun s v -> s ^ " " ^ Float.to_string v)));
+      -> Stdio.Out_channel.output_string f 
+           (class1 ^ "\n" ^ class2 ^ "\n" ^ Float.to_string intercept ^ "\n" ^
+            (Array.fold (Np.Ndarray.to_float_array hyperplane) 
+               ~init:"" ~f:(fun s v -> s ^ " " ^ Float.to_string v)));
       Stdio.Out_channel.flush f;
       Stdio.Out_channel.close f
 
@@ -26,11 +27,12 @@ module SVM_Model = struct
   (* open up a model file with a given filename, parse a model object from it *)
   let load (file: string) : t =
     match Stdio.In_channel.read_lines file with 
-    | class1 :: class2 :: intercept ::arr :: [] -> String.split ~on:' ' arr 
-                                                   |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
-                                                   |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 
-                                                   |> fun (hyperplane) 
-                                                   -> {hyperplane; intercept = Float.of_string intercept; class1; class2;}
+    | class1 :: class2 :: intercept ::arr :: [] 
+      -> String.split ~on:' ' arr 
+         |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
+         |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 
+         |> fun (hyperplane) 
+         -> {hyperplane; intercept = Float.of_string intercept; class1; class2;}
     | _ -> failwith "improper file formatting"
 
   (* train a binary classifier on two playlists represented as tensors *)
@@ -44,9 +46,10 @@ module SVM_Model = struct
     in let clf = LinearSVC.create ~c ~dual:false () 
     in match p1, p2 with 
     | {name = class1; _}, {name = class2; _} 
-      -> LinearSVC.fit clf ~x ~y |> fun svc -> {hyperplane = (LinearSVC.coef_ svc); 
-                                                intercept=(Array.get (Np.Ndarray.to_float_array 
-                                                                      @@ LinearSVC.intercept_ svc) 0); class1; class2}
+      -> LinearSVC.fit clf ~x ~y 
+         |> fun svc -> {hyperplane = (LinearSVC.coef_ svc); 
+                        intercept=(Array.get (Np.Ndarray.to_float_array 
+                                              @@ LinearSVC.intercept_ svc) 0); class1; class2}
 
   let tune (all_c: hyperparameters list) (p1: playlist) (p2: playlist) : t list =
     List.map all_c ~f:(fun c -> train c p1 p2)
@@ -55,9 +58,10 @@ module SVM_Model = struct
     let normalize = Np.square hyperplane |> Np.sum |> Np.Ndarray.to_float_array
                     |> fun (arr) -> Array.get arr 0 |> Float.sqrt
     in Float.(/) 
-      (Float.(+) intercept @@ Array.get (Np.Ndarray.to_float_array 
-                                         @@ Np.dot ~b:(Np.reshape ~newshape:[(Np.Ndarray.size features);] features) 
-                                           (Np.reshape ~newshape:[(Np.Ndarray.size hyperplane);] hyperplane )) 0) normalize
+      (Float.(+) intercept 
+       @@ Array.get (Np.Ndarray.to_float_array 
+                     @@ Np.dot ~b:(Np.reshape ~newshape:[(Np.Ndarray.size features);] features) 
+                       (Np.reshape ~newshape:[(Np.Ndarray.size hyperplane);] hyperplane )) 0) normalize
 
   let predict (svc: t) (features: Np.Ndarray.t) : bool =
     match svc with 

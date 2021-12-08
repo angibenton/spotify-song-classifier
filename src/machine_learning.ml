@@ -60,29 +60,41 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
     save_playlist d.neg_test @@ folder ^ "/neg_test"
   let load_dataset (folder: string) : dataset =
     {pos_train = load_playlist @@ folder ^ "/pos_train";
-    pos_valid = load_playlist @@ folder ^ "/pos_val";
-    pos_test = load_playlist @@ folder ^ "/pos_test";
-    neg_train = load_playlist @@ folder ^ "/neg_train";
-    neg_valid = load_playlist @@ folder ^ "/neg_val";
-    neg_test = load_playlist @@ folder ^ "/neg_test"; }
+     pos_valid = load_playlist @@ folder ^ "/pos_val";
+     pos_test = load_playlist @@ folder ^ "/pos_test";
+     neg_train = load_playlist @@ folder ^ "/neg_train";
+     neg_valid = load_playlist @@ folder ^ "/neg_val";
+     neg_test = load_playlist @@ folder ^ "/neg_test"; }
 
-  (* classify a song represented by a vector into one of the two playlists true = first, false = second *)
+  (* classify a song represented by a vector into one of the two playlists 
+     true = first, false = second *)
   let classify (c: t) (s: song) : string =
     match Classifier.classes c, s with 
     | (class1, class2), {features_vector; _} 
       -> if Classifier.predict c features_vector then class1 else class2
 
   let split ((pos, neg): (playlist * playlist)) (valid: float) (test: float) : dataset =
-    let pos_valid_bound = Np.size ~axis:0 pos.features_matrix |> Float.of_int |> Float.( * ) valid |> Float.round_nearest |> Int.of_float
-    in let pos_test_bound = Np.size ~axis:0 pos.features_matrix |> Float.of_int |> Float.( * ) (Float.(+) valid test) |> Float.round_nearest |> Int.of_float
+    let pos_valid_bound = Np.size ~axis:0 pos.features_matrix 
+                          |> Float.of_int |> Float.( * ) valid 
+                          |> Float.round_nearest |> Int.of_float
+    in let pos_test_bound = Np.size ~axis:0 pos.features_matrix 
+                            |> Float.of_int |> Float.( * ) (Float.(+) valid test) 
+                            |> Float.round_nearest |> Int.of_float
     in let pos_train_bound = Np.size ~axis:0 pos.features_matrix
-    in let neg_valid_bound = Np.size ~axis:0 neg.features_matrix |> Float.of_int |> Float.( * ) valid |> Float.round_nearest |> Int.of_float
-    in let neg_test_bound = Np.size ~axis:0 neg.features_matrix |> Float.of_int |> Float.( * ) (Float.(+) valid test) |> Float.round_nearest |> Int.of_float
+    in let neg_valid_bound = Np.size ~axis:0 neg.features_matrix 
+                             |> Float.of_int |> Float.( * ) valid 
+                             |> Float.round_nearest |> Int.of_float
+    in let neg_test_bound = Np.size ~axis:0 neg.features_matrix 
+                            |> Float.of_int |> Float.( * ) (Float.(+) valid test) 
+                            |> Float.round_nearest |> Int.of_float
     in let neg_train_bound = Np.size ~axis:0 neg.features_matrix
 
-    in if 0 >= pos_valid_bound || 0 >= neg_valid_bound then failwith "Validation split size too small" 
-    else if pos_valid_bound >= pos_test_bound || neg_valid_bound >= neg_test_bound then failwith "Test split size too small" 
-    else if pos_test_bound >= pos_train_bound || neg_test_bound >= neg_train_bound then failwith "Train split size too small (validation + test too big)" 
+    in if 0 >= pos_valid_bound || 0 >= neg_valid_bound 
+    then failwith "Validation split size too small" 
+    else if pos_valid_bound >= pos_test_bound || neg_valid_bound >= neg_test_bound 
+    then failwith "Test split size too small" 
+    else if pos_test_bound >= pos_train_bound || neg_test_bound >= neg_train_bound 
+    then failwith "Train split size too small (validation + test too big)" 
     else
       {pos_valid = replace_features pos @@ rows pos.features_matrix 0 pos_valid_bound;
        pos_test = replace_features pos @@ rows pos.features_matrix pos_valid_bound pos_test_bound;
@@ -92,9 +104,15 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
        neg_train = replace_features neg @@rows neg.features_matrix neg_test_bound neg_train_bound;}
 
   let randomize (p: playlist) : playlist =
-    List.init (Np.size ~axis:0 p.features_matrix) ~f: (fun index -> rows p.features_matrix index (index + 1) |> Np.Ndarray.to_float_array) |>
-    fun l -> List.iter l ~f:(fun row -> Array.sort row ~compare:(fun _ _ -> (Random.int 3) - 1)); List.map l ~f:(fun row -> Np.Ndarray.of_float_array row |> Np.reshape ~newshape:[1; ((Np.size ~axis:1 p.features_matrix))]) |> fun l ->
-    replace_features p @@ matrix_of_vector_list l
+    List.init (Np.size ~axis:0 p.features_matrix) 
+      ~f: (fun index -> rows p.features_matrix index (index + 1) 
+                        |> Np.Ndarray.to_float_array)
+    |> fun l -> List.iter l 
+      ~f:(fun row -> Array.sort row ~compare:(fun _ _ -> (Random.int 3) - 1)); 
+    List.map l ~f:(fun row 
+                    -> Np.Ndarray.of_float_array row 
+                       |> Np.reshape ~newshape:[1; ((Np.size ~axis:1 p.features_matrix))]) 
+    |> fun l -> replace_features p @@ matrix_of_vector_list l
 
   let balance_classes ((pos, neg): (playlist * playlist)) : (playlist * playlist) =
     let len = Int.max (Np.size ~axis:0 pos.features_matrix) 
@@ -104,47 +122,62 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
 
   let clean_features (p:playlist) (stat: (float * float) list) (f: (float * float) -> float -> float) : playlist =
     let f (col: int) (arr: Np.Ndarray.t) (feat_stats: (float * float)) : Np.Ndarray.t = Np.append ~axis:1 ~arr 
-              ~values:(Printf.printf "col: %d" col; (map_vector (columns p.features_matrix col (col + 1)) 
-                         (fun old -> f feat_stats old)) |> fun v -> Np.reshape ~newshape:[Np.size ~axis:0 p.features_matrix; 1] v) ()
+        ~values:(Printf.printf "col: %d" col; 
+                 (map_vector (columns p.features_matrix col (col + 1)) 
+                    (fun old -> f feat_stats old)) 
+                 |> fun v -> Np.reshape ~newshape:[Np.size ~axis:0 p.features_matrix; 1] v) ()
     in replace_features p 
     @@ List.foldi stat ~init:(Np.empty [Np.size ~axis:0 p.features_matrix; 0]) ~f 
-       
+
   let arr_min (arr: float array) : float =
-    Array.fold arr ~init:Float.infinity ~f:(fun min elem -> if Float.(<) elem min then elem else min)
+    Array.fold arr ~init:Float.infinity 
+      ~f:(fun min elem -> if Float.(<) elem min then elem else min)
 
   let arr_max (arr: float array) : float =
-    Array.fold arr ~init:Float.neg_infinity ~f:(fun max elem -> if Float.(<) max elem then elem else max)
+    Array.fold arr ~init:Float.neg_infinity 
+      ~f:(fun max elem -> if Float.(<) max elem then elem else max)
 
   let arr_mean (arr: float array) : float =
-    Array.fold arr ~init:(0., 0.) ~f:(fun (sum, count) elem -> (Float.(+) sum elem, Float.(+) count 1.)) |> fun (sum, count) -> Float.(/) sum count
+    Array.fold arr ~init:(0., 0.) 
+      ~f:(fun (sum, count) elem -> (Float.(+) sum elem, Float.(+) count 1.)) 
+    |> fun (sum, count) -> Float.(/) sum count
 
   let arr_std (arr: float array) (mean: float): float =
-    Array.fold arr ~init:(0., 0.) ~f:(fun (sum, count) elem -> (Float.(+) sum @@ Float.square @@ Float.(-) elem mean, Float.(+) count 1.)) |> fun (sum, count) -> Float.sqrt @@ Float.(/) sum count
+    Array.fold arr ~init:(0., 0.) 
+      ~f:(fun (sum, count) elem 
+           -> (Float.(+) sum @@ Float.square @@ Float.(-) elem mean, Float.(+) count 1.)) 
+    |> fun (sum, count) -> Float.sqrt @@ Float.(/) sum count
 
 
   let normalize ((pos, neg): (playlist * playlist)) : (playlist * playlist) =
-    Printf.printf "cols: %d" @@ Np.size ~axis:1 neg.features_matrix;
-    let cols = List.init (Np.size ~axis:1 pos.features_matrix) ~f:(fun col -> columns (Np.append ~axis:0 ~arr:pos.features_matrix 
-    ~values:neg.features_matrix ()) col (col + 1) |> Np.Ndarray.to_float_array)
+    let cols = List.init (Np.size ~axis:1 pos.features_matrix) 
+        ~f:(fun col -> columns (Np.append ~axis:0 ~arr:pos.features_matrix 
+                                  ~values:neg.features_matrix ()) col (col + 1) 
+                       |> Np.Ndarray.to_float_array)
     in let min_max = 
-       List.map cols ~f:(fun arr -> (arr_min arr, arr_max arr))
-  in  Printf.printf "cols: %d" @@ List.length min_max; let to_normal ((min, max): float * float) (elem: float) : float = Float.(/) (Float.(-) elem min)(Float.(-) max min)
+         List.map cols ~f:(fun arr -> (arr_min arr, arr_max arr))
+    in let to_normal ((min, max): float * float) (elem: float) : float = 
+         Float.(/) (Float.(-) elem min)(Float.(-) max min)
     in (clean_features pos min_max to_normal, 
         clean_features neg min_max to_normal)
 
   let standardize ((pos, neg): (playlist * playlist)) : (playlist * playlist) =
-    let cols = List.init (Np.size ~axis:1 pos.features_matrix) ~f:(fun col -> columns (Np.append ~axis:0 ~arr:pos.features_matrix 
-    ~values:neg.features_matrix ()) col (col + 1) |> Np.Ndarray.to_float_array)
+    let cols = List.init (Np.size ~axis:1 pos.features_matrix) 
+        ~f:(fun col -> columns (Np.append ~axis:0 ~arr:pos.features_matrix 
+                                  ~values:neg.features_matrix ()) col (col + 1) 
+                                  |> Np.Ndarray.to_float_array)
     in let mean_std = 
-       List.map cols ~f:(fun arr -> (arr_mean arr, arr_std arr @@ arr_mean arr))
-          in let to_standard ((mean, std): float * float) (elem: float) : float = Float.(/) (Float.(-) elem mean)std
-        in (clean_features pos mean_std to_standard, 
-            clean_features neg mean_std to_standard)  
+         List.map cols ~f:(fun arr -> (arr_mean arr, arr_std arr @@ arr_mean arr))
+    in let to_standard ((mean, std): float * float) (elem: float) : float = 
+      Float.(/) (Float.(-) elem mean) std
+    in (clean_features pos mean_std to_standard, 
+        clean_features neg mean_std to_standard)  
 
   let rec test_sample_i (c: t) (samples: Np.Ndarray.t) (pos: int) (index: int) : int =
     if (index >= Np.size ~axis:0 samples) then pos 
     else (test_sample_i c samples 
-            (if Classifier.predict c @@ rows samples index (index + 1) then pos + 1 else pos) (index + 1))
+            (if Classifier.predict c @@ rows samples index (index + 1) 
+              then pos + 1 else pos) (index + 1))
 
   let test (c: t) (pos: playlist) (neg: playlist) : confusion_matrix =
     match pos, neg with 

@@ -2,7 +2,9 @@ open Spotify
 open Numpy_helper
 
 type confusion_matrix = {tp: int; fp: int; tn: int; fn: int}
-type dataset = {pos_train: playlist; pos_valid: playlist; pos_test: playlist; neg_train: playlist; neg_valid: playlist; neg_test: playlist}
+type dataset = {pos_train: playlist; pos_valid: playlist; 
+                pos_test: playlist; neg_train: playlist; 
+                neg_valid: playlist; neg_test: playlist}
 
 module type Model = sig 
   (* the model *)
