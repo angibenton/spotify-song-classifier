@@ -60,49 +60,57 @@ let test_f1 _ =
                                     @@ SVM_Classification.f1_score cm_3);
 ;;
 
-let pos_song_1_1 = {name = "Positive Song 1"; sid = "1";features_vector = Np.Ndarray.vectorf [|1.|]}
-let pos_song_1_2 = {name = "Positive Song 2"; sid = "2";features_vector = Np.Ndarray.vectorf [|0.5|]}
+let pos_song_1 = {name = "Positive Song 1"; sid = "1";
+                  features_vector = Np.reshape ~newshape:[1; 1] @@ Np.Ndarray.vectorf [|1.|]}
 
-let pos_song_2 = {name = "Positive Song 1"; sid = "1";features_vector = Np.Ndarray.vectorf [| 10.; 10. |]}
-let neg_song_2 = {name = "Positive Song 1"; sid = "1";features_vector = Np.Ndarray.vectorf [| -10.; -10. |]}
+let neg_song_1 = {name = "Negative Song 1"; sid = "1";
+                  features_vector = Np.reshape ~newshape:[1; 1] @@ Np.Ndarray.vectorf [|0.5|]}
 
-let pos_playlist_2 = {name = "the first one"; pid = "123"; 
+let pos_song_2 = {name = "Positive Song 2"; sid = "2";
+                  features_vector = Np.reshape ~newshape:[1; 2] @@ Np.Ndarray.vectorf [| 10.; 10. |]}
+
+let neg_song_2 = {name = "Negative Song 2"; sid = "2";
+                  features_vector = Np.reshape ~newshape:[1; 2] @@  Np.Ndarray.vectorf [| -10.; -10. |]}
+
+let pos_song_3 = {name = "Positive Song 1"; sid = "3";
+                     features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                         [| 0.; 1.; 10.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 3.0; 0.5|]}
+
+let neg_song_3 = {name = "Negative Song 3"; sid = "3";
+                     features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                         [| 0.; 5.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; -3.0; 0.75|]}
+
+let pos_playlist_1 = {name = "Positive Playlist 1"; pid = "123"; 
+                      features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_1.features_vector  |])};;
+let neg_playlist_1 = {name = "Negative Playlist 1"; pid = "124"; 
+                      features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array neg_song_1.features_vector |])};;
+
+
+let pos_playlist_2 = {name = "Positive Playlist 2"; pid = "123"; 
                       features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_2.features_vector  |])};;
-let neg_playlist_2 = {name = "the second one"; pid = "124"; 
+let neg_playlist_2 = {name = "Negative Playlist 2"; pid = "124"; 
                       features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array neg_song_2.features_vector |])};;
 
-let pos_playlist_3 = {name = "the first one"; pid = "123"; 
-                      features_matrix = (Np.matrixf [| [| 0.; 5. |];  |])};;
-let neg_playlist_3 = {name = "the second one"; pid = "124"; 
-                      features_matrix = (Np.matrixf [| [| 0.; 3. |]; |])};;
+let pos_playlist_3 = {name = "Positive Playlist 3"; pid = "123"; 
+                      features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_3.features_vector  |])};;
+let neg_playlist_3 = {name = "Negative Playlist 3"; pid = "124"; 
+                      features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_3.features_vector |])};;
 
-(*
-let test_svm_predict_score _ = 
-  assert_bool "Model 1 Test 1" @@ float_equals_epsilon (1.0) 
-  @@ SVM_Model.predict_score svm_1.hyperplane svm_1.intercept pos_song_1_1.features_vector;
-  assert_bool "Model 1 Test 1" @@ float_equals_epsilon (0.5) 
-  @@ SVM_Model.predict_score svm_1.hyperplane svm_1.intercept pos_song_1_2.features_vector;
-;;
-
-let test_svm_predict _ = 
-  assert_bool "Model 1 Test 1" @@ SVM_Model.predict svm_1 @@ pos_song_1_1.features_vector;
-  (*assert_bool "Model 1 Test 2" @@ SVM_Model.predict svm_1 @@ Np.Ndarray.vectorf [|-2.|];*)
-;;*)
 (*
 let test_classify _ = 
   assert_equal "Positive" @@ SVM_Classification.classify svm_1 pos_song_1_1;
 ;;
 *)
-let test_svm_train _ = 
+let test_svm_train_predict _ = 
   assert_bool "Model 2 misclassifies its positive song" 
     (SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2 
      |> fun svm -> SVM_Model.predict svm @@ pos_song_2.features_vector );
   assert_bool "SVM should train deterministically" (
     (SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2, SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2)
     |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
-  assert_bool "Model 3" 
+  assert_bool "Model 3 misclassifies its positive song" 
     (SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3
-     |> fun svm -> SVM_Model.predict svm @@ Np.Ndarray.vectorf [|0.; 5.;|]);
+     |> fun svm -> SVM_Model.predict svm @@ pos_song_3.features_vector);
   assert_bool "SVM should train deterministically" (
     (SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3, SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3)
     |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
@@ -135,7 +143,7 @@ let svm_tests =
     "Equal" >:: test_svm_equal;
     "Save and Load" >:: test_svm_save_load;
 
-    (*"Train" >:: test_svm_train;*)
+    "Train and Predict" >:: test_svm_train_predict;
     (*"Predict" >:: test_svm_predict;
       "Predict Score" >:: test_svm_predict_score;*)
   ]

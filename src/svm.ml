@@ -47,14 +47,17 @@ module SVM_Model = struct
   intercept=(Array.get (Np.Ndarray.to_float_array @@ LinearSVC.intercept_ svc) 0); class1; class2}
 
   let predict_score (hyperplane: Np.Ndarray.t) (intercept: float) (features: Np.Ndarray.t) : float =
-    let normalize = Np.dot hyperplane ~b:hyperplane |> Np.Ndarray.to_float_array
+    (*let normalize = Np.square hyperplane |> Np.sum |> Np.Ndarray.to_float_array
                                      |> fun (arr) -> Array.get arr 0 |> Float.sqrt
-    in Float.(/) (Float.(+) intercept @@ Array.get (Np.Ndarray.to_float_array @@ 
-                             Np.dot ~b:features (Np.reshape ~newshape:[(Np.Ndarray.size hyperplane); 1] hyperplane)) 0) normalize
+    in Float.(/) *)
+    (Array.fold (Np.Ndarray.to_float_array features) ~init:() ~f:(fun () n -> Stdio.printf "song elem:%f" n) |> fun _ ->
+    (Float.(+) intercept @@ Array.get (Np.Ndarray.to_float_array @@ 
+                             Np.dot ~b:(Np.reshape ~newshape:[(Np.Ndarray.size features);] features) (Np.reshape ~newshape:[(Np.Ndarray.size hyperplane);] hyperplane |> fun h -> (Array.fold (Np.Ndarray.to_float_array h) ~init:() ~f:(fun () n -> Stdio.printf "elem:%f" n) |> fun _ -> h))) 0)) (*normalize*)
 
   let predict (svc: t) (features: Np.Ndarray.t) : bool =
+    Printf.printf "\nmodel %s:" svc.class2; Printf.printf "intercept: %f" svc.intercept;
     match svc with 
-    | {hyperplane; intercept; _} ->Float.(<=) 0. @@ predict_score hyperplane intercept features
+    | {hyperplane; intercept; _} ->Float.(<=) 0. @@ (predict_score hyperplane intercept features |> fun s -> Printf.printf "score: %f" s; s)
 
   let classes (svc: t) : string * string = 
     match svc with
