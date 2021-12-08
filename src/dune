@@ -2,21 +2,21 @@
  (name spotify)
  (modules spotify)
  (preprocess 
-  (pps ppx_deriving_yojson ppx_let lwt_ppx))
+  (pps ppx_deriving_yojson ppx_let lwt_ppx bisect_ppx))
  (libraries core sklearn cohttp-lwt-unix lwt yojson ppx_deriving_yojson.runtime))
 
 (library
  (name machine_learning)
  (modules machine_learning)
  (preprocess
-  (pps ppx_let))
+  (pps ppx_let bisect_ppx))
  (libraries core sklearn spotify))
 
 (library
  (name svm)
  (modules svm)
  (preprocess
-  (pps ppx_let))
+  (pps ppx_let bisect_ppx))
  (libraries core sklearn machine_learning))
 
 (executables

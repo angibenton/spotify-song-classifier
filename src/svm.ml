@@ -59,6 +59,14 @@ module SVM_Model = struct
   let classes (svc: t) : string * string = 
     match svc with
     | {class1; class2; _} -> (class1, class2)
+
+  let equal (svm1: t) (svm2: t) : bool =
+    Array.equal (fun f1 f2 -> Float.(-) f1 f2 
+    |> Float.abs 
+    |>  Float.(>) 0.001) (Np.Ndarray.to_float_array svm1.hyperplane) @@ Np.Ndarray.to_float_array svm2.hyperplane
+    && Float.(=) svm1.intercept svm2.intercept
+    && String.(=) svm1.class1 svm2.class1
+    && String.(=) svm1.class2 svm2.class2
 end 
 
 module SVM_Classification = Classification(SVM_Model)

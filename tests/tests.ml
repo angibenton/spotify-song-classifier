@@ -9,7 +9,7 @@ let float_equals_epsilon = fun f1 f2 -> Float.(-) f1 f2
                                         |>  Float.(>) 0.001;;
 
 let cm_1 = {tp = 5; fp = 0; fn = 6; tn = 4};;
-let cm_2 = {tp = 5543; fp = 5; fn = 5852; tn = 314};;
+let cm_2 = {tp = 55431; fp = 5; fn = 58520; tn = 314};;
 let cm_3 = {tp = 9; fp = 588097; fn = 907; tn = 78954};;
 let pretty_confusion_1 = "               actual  
                pos neg 
@@ -19,13 +19,13 @@ predicted     ---------
           neg | 6 | 4 |
               ---------
 ";;
-let pretty_confusion_2 = "                  actual     
-                 pos   neg   
-              ---------------
-          pos | 5543 |    5 |
-predicted     ---------------
-          neg | 5852 |  314 |
-              ---------------
+let pretty_confusion_2 = "                   actual      
+                  pos   neg    
+              -----------------
+          pos | 55431 |     5 |
+predicted     -----------------
+          neg | 58520 |   314 |
+              -----------------
 ";;
 let pretty_confusion_3 = "                    actual       
                   pos     neg    
@@ -43,14 +43,21 @@ let test_pretty_confusion _ =
 ;;
 
 let test_acc _ =
-  assert_bool "Confusion Matrix 3" (float_equals_epsilon 0.6 
+  assert_bool "Confusion Matrix 1" (float_equals_epsilon 0.6 
                                     @@ SVM_Classification.accuracy cm_1);
+  assert_bool "Confusion Matrix 2" (float_equals_epsilon 0.4878 
+                                    @@ SVM_Classification.accuracy cm_2);
+  assert_bool "Confusion Matrix 3" (float_equals_epsilon 0.1182 
+                                    @@ SVM_Classification.accuracy cm_3);
 ;;
-assert_bool "Confusion Matrix 3" (float_equals_epsilon 0.5 
-                                  @@ SVM_Classification.accuracy cm_2);
-;;
-assert_bool "Confusion Matrix 3" (float_equals_epsilon 0.1182 
-                                  @@ SVM_Classification.accuracy cm_3);
+
+let test_f1 _ =
+  assert_bool "Confusion Matrix 1" (float_equals_epsilon 0.6250 
+                                    @@ SVM_Classification.f1_score cm_1);
+  assert_bool "Confusion Matrix 2" (float_equals_epsilon 0.6545 
+                                    @@ SVM_Classification.f1_score cm_2);
+  assert_bool "Confusion Matrix 3" (float_equals_epsilon 0.
+                                    @@ SVM_Classification.f1_score cm_3);
 ;;
 
 let pos_song_1_1 = {name = "Positive Song 1"; sid = "1";features_vector = Np.Ndarray.vectorf [|1.|]}
@@ -87,16 +94,35 @@ let test_classify _ =
 ;;
 *)
 let test_svm_train _ = 
-  assert_bool "Model 1" 
+  assert_bool "Model 2 misclassifies its positive song" 
     (SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2 
-     |> fun svm -> SVM_Model.predict svm @@ Np.Ndarray.vectorf [|10.; 10.;|]);
-  assert_bool "Model 2" 
+     |> fun svm -> SVM_Model.predict svm @@ pos_song_2.features_vector );
+  assert_bool "SVM should train deterministically" (
+    (SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2, SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2)
+    |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
+  assert_bool "Model 3" 
     (SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3
      |> fun svm -> SVM_Model.predict svm @@ Np.Ndarray.vectorf [|0.; 5.;|]);
+  assert_bool "SVM should train deterministically" (
+    (SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3, SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3)
+    |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
 ;;
 
-(*let test_svm_save_load _ =*)
+let test_svm_equal _ =
+  assert_bool "Model 2 not equal to itself" 
+    (SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2 
+     |> fun svm -> SVM_Model.equal svm svm);
+  assert_bool "Model 3 not equal to itself" 
+    (SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3
+     |> fun svm -> SVM_Model.equal svm svm);
+;;
 
+let test_svm_save_load _ =
+  let filename_2 = "./model_2" in
+  assert_bool "Error in saving or loading Model 2" 
+  @@ let orig = SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2 
+  in SVM_Model.save orig filename_2; SVM_Model.equal orig @@ SVM_Model.load filename_2;
+;;
 
 let test_svm_classes _ =
   assert_equal (SVM_Model.train 1. {features_matrix = (Np.matrixf[|[|5.|]|]); pid = "1"; name= "hi"}
@@ -106,9 +132,12 @@ let test_svm_classes _ =
 let svm_tests =
   "SVM" >: test_list [
     "Classes" >:: test_svm_classes;
+    "Equal" >:: test_svm_equal;
+    "Save and Load" >:: test_svm_save_load;
+
     (*"Train" >:: test_svm_train;*)
     (*"Predict" >:: test_svm_predict;
-    "Predict Score" >:: test_svm_predict_score;*)
+      "Predict Score" >:: test_svm_predict_score;*)
   ]
 
 let machine_learning_tests =
@@ -116,6 +145,7 @@ let machine_learning_tests =
     (*"Classification" >:: test_classify;*)
     "Pretty Confusion" >:: test_pretty_confusion;
     "Accuracy" >:: test_acc;
+    "F1 Score" >:: test_f1;
   ]
 
 let series =

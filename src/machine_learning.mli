@@ -18,6 +18,7 @@ module type Model = sig
   val predict : t -> Np.Ndarray.t -> bool
   (* give the class names of the model *)
   val classes: t -> string * string
+  val equal: t -> t -> bool
 end 
 
 module type Classification = sig
