@@ -23,6 +23,12 @@ end
 
 module type Classification = sig
   type t
+  type dataset
+  val randomize : playlist -> playlist
+  val balance_classes : playlist -> playlist -> (playlist * playlist)
+  val normalize : playlist -> playlist -> (playlist * playlist)
+  val standardize : playlist -> playlist -> (playlist * playlist)
+  val split : playlist -> playlist -> float -> float -> dataset
   (* classify a song represented by a vector into one of the two playlists *)
   val classify : t -> song -> string
   (* return the confusion matrix from testing the model on a tensor of labeled songs *)
