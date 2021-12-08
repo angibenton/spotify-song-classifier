@@ -73,12 +73,12 @@ let neg_song_2 = {name = "Negative Song 2"; sid = "2";
                   features_vector = Np.reshape ~newshape:[1; 2] @@  Np.Ndarray.vectorf [| -10.; -10. |]}
 
 let pos_song_3 = {name = "Positive Song 1"; sid = "3";
-                     features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
-                         [| 0.; 1.; 10.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 3.0; 0.5|]}
+                  features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                      [| 0.; 1.; 10.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 3.0; 0.5|]}
 
 let neg_song_3 = {name = "Negative Song 3"; sid = "3";
-                     features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
-                         [| 0.; 5.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; -3.0; 0.75|]}
+                  features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                      [| 0.; 5.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; -3.0; 0.75|]}
 
 let pos_playlist_1 = {name = "Positive Playlist 1"; pid = "123"; 
                       features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_1.features_vector  |])};;
@@ -96,45 +96,96 @@ let pos_playlist_3 = {name = "Positive Playlist 3"; pid = "123";
 let neg_playlist_3 = {name = "Negative Playlist 3"; pid = "124"; 
                       features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_3.features_vector |])};;
 
-(*
+let svm_1 = SVM_Model.train 1.0 pos_playlist_1 neg_playlist_1
+let svm_2 = SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2
+let svm_3 = SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3
+
+
 let test_classify _ = 
-  assert_equal "Positive" @@ SVM_Classification.classify svm_1 pos_song_1_1;
+  assert_equal "Positive Playlist 1" @@ SVM_Classification.classify svm_1 pos_song_1;
+  assert_equal "Negative Playlist 1" @@ SVM_Classification.classify svm_1 neg_song_1;
+  assert_equal "Positive Playlist 2" @@ SVM_Classification.classify svm_2 pos_song_2;
+  assert_equal "Negative Playlist 2" @@ SVM_Classification.classify svm_2 neg_song_2;
+  assert_equal "Positive Playlist 3" @@ SVM_Classification.classify svm_3 pos_song_3;
+  assert_equal "Negative Playlist 3" @@ SVM_Classification.classify svm_3 neg_song_3;
 ;;
-*)
+
+let true_cm = {tp = 1; fp = 0; fn = 0; tn = 1};;
+
+let false_cm = {tp = 0; fp = 1; fn = 1; tn = 0};;
+
+
+let confusion_equal cm_1 cm_2 : bool = 
+  Int.equal cm_1.tp cm_2.tp && Int.equal cm_1.tn cm_2.tn && Int.equal cm_1.fn cm_2.fn && Int.equal cm_1.fp cm_2.fp
+
+let test_test _ = 
+  SVM_Classification.test svm_1 pos_playlist_1 neg_playlist_1 |> fun cm -> assert_bool "Incorrect classification during test" @@ confusion_equal cm true_cm;
+  SVM_Classification.test svm_1 neg_playlist_1 pos_playlist_1 |> fun cm -> assert_bool "Incorrect classification during test" @@ confusion_equal cm false_cm;
+  SVM_Classification.test svm_2 pos_playlist_2 neg_playlist_2 |> fun cm -> assert_bool "Incorrect classification during test" @@ confusion_equal cm true_cm;
+  SVM_Classification.test svm_2 neg_playlist_2 pos_playlist_2 |> fun cm -> assert_bool "Incorrect classification during test" @@ confusion_equal cm false_cm;
+  SVM_Classification.test svm_3 pos_playlist_3 neg_playlist_3 |> fun cm -> assert_bool "Incorrect classification during test" @@ confusion_equal cm true_cm;
+  SVM_Classification.test svm_3 neg_playlist_3 pos_playlist_3 |> fun cm -> assert_bool "Incorrect classification during test" @@ confusion_equal cm false_cm;
+
+;;
+
 let test_svm_train_predict _ = 
+  assert_bool "Model 1 misclassifies its positive song" 
+    ( svm_1
+      |> fun svm -> SVM_Model.predict svm @@ pos_song_1.features_vector );
+  assert_bool "Model 1 misclassifies its negative song" 
+  @@ not (svm_1
+          |> fun svm -> SVM_Model.predict svm @@ neg_song_1.features_vector );
+  assert_bool "SVM should train deterministically" (
+    (SVM_Model.train 1.0 pos_playlist_1 neg_playlist_1, SVM_Model.train 1.0 pos_playlist_1 neg_playlist_1)
+    |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
   assert_bool "Model 2 misclassifies its positive song" 
-    (SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2 
+    (svm_2
      |> fun svm -> SVM_Model.predict svm @@ pos_song_2.features_vector );
+  assert_bool "Model 2 misclassifies its negative song" 
+  @@ not (svm_2
+          |> fun svm -> SVM_Model.predict svm @@ neg_song_2.features_vector );
   assert_bool "SVM should train deterministically" (
     (SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2, SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2)
     |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
   assert_bool "Model 3 misclassifies its positive song" 
-    (SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3
+    (svm_3
      |> fun svm -> SVM_Model.predict svm @@ pos_song_3.features_vector);
+  assert_bool "Model 3 misclassifies its negative song" 
+  @@ not (svm_3
+          |> fun svm -> SVM_Model.predict svm @@ neg_song_3.features_vector);
   assert_bool "SVM should train deterministically" (
     (SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3, SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3)
     |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
 ;;
 
 let test_svm_equal _ =
+  assert_bool "Model 1 not equal to itself" 
+  @@ SVM_Model.equal svm_1 svm_1;
   assert_bool "Model 2 not equal to itself" 
-    (SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2 
-     |> fun svm -> SVM_Model.equal svm svm);
+  @@ SVM_Model.equal svm_2 svm_2;
   assert_bool "Model 3 not equal to itself" 
-    (SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3
-     |> fun svm -> SVM_Model.equal svm svm);
+  @@ SVM_Model.equal svm_3 svm_3;
 ;;
 
 let test_svm_save_load _ =
+  let filename_1 = "./model_1" in
+  assert_bool "Error in saving or loading Model 1" 
+  @@ (SVM_Model.save svm_1 filename_1; SVM_Model.equal svm_1 @@ SVM_Model.load filename_1);
   let filename_2 = "./model_2" in
   assert_bool "Error in saving or loading Model 2" 
-  @@ let orig = SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2 
-  in SVM_Model.save orig filename_2; SVM_Model.equal orig @@ SVM_Model.load filename_2;
+  @@ (SVM_Model.save svm_2 filename_2; SVM_Model.equal svm_2 @@ SVM_Model.load filename_2);
+  let filename_3 = "./model_3" in
+  assert_bool "Error in saving or loading Model 3" 
+  @@ (SVM_Model.save svm_3 filename_3; SVM_Model.equal svm_3 @@ SVM_Model.load filename_3);
+  let bad_filename = "./bad"
+in let bad_load = fun () -> let f = Stdio.Out_channel.create bad_filename in Stdio.Out_channel.output_string f "hi"; Stdio.Out_channel.flush f;
+  Stdio.Out_channel.close f; (SVM_Model.load bad_filename |> fun _ -> ()) in assert_raises (Failure "improper file formatting") bad_load;  
 ;;
 
 let test_svm_classes _ =
-  assert_equal (SVM_Model.train 1. {features_matrix = (Np.matrixf[|[|5.|]|]); pid = "1"; name= "hi"}
-                  {features_matrix = (Np.matrixf[|[|6.|]|]); pid = "2"; name = "6"} |> SVM_Model.classes ) ("hi", "6");
+  assert_equal (SVM_Model.classes svm_1) ("Positive Playlist 1", "Negative Playlist 1");
+  assert_equal (SVM_Model.classes svm_2) ("Positive Playlist 2", "Negative Playlist 2");
+  assert_equal (SVM_Model.classes svm_3) ("Positive Playlist 3", "Negative Playlist 3");
 ;;
 
 let svm_tests =
@@ -142,15 +193,13 @@ let svm_tests =
     "Classes" >:: test_svm_classes;
     "Equal" >:: test_svm_equal;
     "Save and Load" >:: test_svm_save_load;
-
     "Train and Predict" >:: test_svm_train_predict;
-    (*"Predict" >:: test_svm_predict;
-      "Predict Score" >:: test_svm_predict_score;*)
   ]
 
 let machine_learning_tests =
   "Machine Learning" >: test_list [
-    (*"Classification" >:: test_classify;*)
+    "Classification" >:: test_classify;
+    "Test" >:: test_test;
     "Pretty Confusion" >:: test_pretty_confusion;
     "Accuracy" >:: test_acc;
     "F1 Score" >:: test_f1;
