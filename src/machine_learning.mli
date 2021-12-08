@@ -1,8 +1,8 @@
-module Np = Np.Numpy
-
 open Spotify
+open Numpy_helper
 
 type confusion_matrix = {tp: int; fp: int; tn: int; fn: int}
+type dataset = {pos_train: playlist; pos_valid: playlist; pos_test: playlist; neg_train: playlist; neg_valid: playlist; neg_test: playlist}
 
 module type Model = sig 
   (* the model *)
@@ -14,6 +14,8 @@ module type Model = sig
   val load : string -> t
   (* train a binary classifier on two playlists represented as tensors *)
   val train : hyperparameters -> playlist -> playlist -> t
+  (* train many classifiers with different hyperparameter combinations *)
+  val tune : hyperparameters list -> playlist -> playlist -> t list
   (* predict the class a new feature vector belongs to, true being positive class *)
   val predict : t -> Np.Ndarray.t -> bool
   (* give the class names of the model *)
@@ -23,16 +25,19 @@ end
 
 module type Classification = sig
   type t
-  type dataset
   val randomize : playlist -> playlist
-  val balance_classes : playlist -> playlist -> (playlist * playlist)
-  val normalize : playlist -> playlist -> (playlist * playlist)
-  val standardize : playlist -> playlist -> (playlist * playlist)
-  val split : playlist -> playlist -> float -> float -> dataset
+  val balance_classes : (playlist * playlist) -> (playlist * playlist)
+  val normalize : (playlist * playlist) -> (playlist * playlist)
+  val standardize : (playlist * playlist) -> (playlist * playlist)
+  val split : (playlist * playlist) -> float -> float -> dataset
+  val save_dataset : dataset -> string -> unit
+  val load_dataset : string -> dataset
   (* classify a song represented by a vector into one of the two playlists *)
   val classify : t -> song -> string
   (* return the confusion matrix from testing the model on a tensor of labeled songs *)
   val test : t -> playlist -> playlist -> confusion_matrix
+  (* choose the best model on the validation set based on some evaulation function *)
+  val tune : t list -> playlist -> playlist -> (confusion_matrix -> float) -> t
   (* format the confusion matrix to be printed *)
   val pretty_confusion : confusion_matrix -> string
   (* calculate the accuracy of a test result confusion matrix *)

@@ -1,23 +1,30 @@
 (library
+ (name numpy_helper)
+ (modules numpy_helper)
+ (preprocess 
+  (pps bisect_ppx))
+ (libraries core sklearn))
+
+(library
  (name spotify)
  (modules spotify)
  (preprocess 
   (pps ppx_deriving_yojson ppx_let lwt_ppx bisect_ppx))
- (libraries core sklearn cohttp-lwt-unix lwt yojson ppx_deriving_yojson.runtime))
+ (libraries core sklearn numpy_helper cohttp-lwt-unix lwt yojson ppx_deriving_yojson.runtime))
 
 (library
  (name machine_learning)
  (modules machine_learning)
  (preprocess
   (pps ppx_let bisect_ppx))
- (libraries core sklearn spotify))
+ (libraries core numpy_helper sklearn spotify))
 
 (library
  (name svm)
  (modules svm)
  (preprocess
   (pps ppx_let bisect_ppx))
- (libraries core sklearn machine_learning))
+ (libraries core sklearn numpy_helper machine_learning))
 
 (executables
  (names run test_spotify)

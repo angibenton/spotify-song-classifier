@@ -2,7 +2,7 @@ open Core
 open Lwt
 open Cohttp
 open Cohttp_lwt_unix
-module Np = Np.Numpy
+open Numpy_helper
 
 let feature_names = [
   "danceability";
@@ -148,15 +148,6 @@ let yojson_extract_list (wrapped_list: Yojson.Safe.t): Yojson.Safe.t list =
   | `List ls -> ls |>  List.filter ~f:(fun elem -> match elem with | `Null -> false | _ -> true)
   | _ -> failwith "Yojson object does not have a list at the top level"
 
-let matrix_of_vector_list (vecs: Np.Ndarray.t list): Np.Ndarray.t =  
-  let append_vector (cur_matrix: Np.Ndarray.t) (new_vector: Np.Ndarray.t) : Np.Ndarray.t = 
-    Np.append ~axis:0 ~arr:cur_matrix () ~values:new_vector
-  in
-  match vecs with 
-  | head :: tail -> 
-    List.fold_left tail ~init:head ~f:append_vector 
-  | _ -> assert false
-
 let song_features_yojson_to_vector (features_yojson: Yojson.Safe.t): Np.Ndarray.t = 
   List.map feature_names ~f:(get_audio_feature features_yojson) 
   |> Np.Ndarray.of_float_list
@@ -202,6 +193,28 @@ let playlist_of_id (pid: string) (api_token: string): playlist Lwt.t =
   let%lwt batch_body = request_song_features_batch ids api_token in
   let features_matrix = batch_body |> Yojson.Safe.from_string |> playlist_features_yojson_to_matrix in
   Lwt.return {name; pid; features_matrix;}
+
+let save_playlist (p: playlist) (file: string) : unit =
+  let f = Stdio.Out_channel.create file
+  in Stdio.Out_channel.output_string f 
+    (p.name ^ "\n" ^ p.pid ^ List.fold 
+       ~init:"" ~f:(fun s row -> s ^ "\n" ^ Array.fold ~init:"" 
+                                   ~f:(fun s elem -> s ^ " " ^ elem) row) 
+       (List.init (Np.size ~axis:0 p.features_matrix) 
+          ~f:(fun index -> rows p.features_matrix index (index + 1) 
+                           |> Np.Ndarray.to_float_array |> Array.map ~f:Float.to_string)));
+  Stdio.Out_channel.flush f;
+  Stdio.Out_channel.close f
+
+let load_playlist (file: string) : playlist =
+  match Stdio.In_channel.read_lines file with 
+  | name :: pid :: matrix -> List.filter ~f:(fun s-> not @@ String.is_empty s) matrix |> List.map ~f:(fun row -> String.split ~on:' ' row |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
+                                                                                                                 |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list |> Np.reshape ~newshape:[1; (List.length feature_names)]) |> matrix_of_vector_list |> fun features_matrix ->
+                             {features_matrix; name; pid;}
+  | _ -> failwith "improper file formatting"
+
+let replace_features (p: playlist) (f: Np.Ndarray.t) : playlist =
+  {features_matrix = f; name = p.name; pid = p.pid}
 
 let song_of_id (sid: string) (api_token: string): song Lwt.t =
   let%lwt features_body = request_song_features sid api_token in

@@ -48,6 +48,9 @@ module SVM_Model = struct
                                                 intercept=(Array.get (Np.Ndarray.to_float_array 
                                                                       @@ LinearSVC.intercept_ svc) 0); class1; class2}
 
+  let tune (all_c: hyperparameters list) (p1: playlist) (p2: playlist) : t list =
+    List.map all_c ~f:(fun c -> train c p1 p2)
+
   let predict_score (hyperplane: Np.Ndarray.t) (intercept: float) (features: Np.Ndarray.t) : float =
     let normalize = Np.square hyperplane |> Np.sum |> Np.Ndarray.to_float_array
                     |> fun (arr) -> Array.get arr 0 |> Float.sqrt
