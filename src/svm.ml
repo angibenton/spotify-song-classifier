@@ -29,7 +29,8 @@ module SVM_Model = struct
     | class1 :: class2 :: intercept ::arr :: [] -> String.split ~on:' ' arr 
                                                    |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
                                                    |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 
-                                                   |> fun (hyperplane) -> {hyperplane; intercept = Float.of_string intercept; class1; class2;}
+                                                   |> fun (hyperplane) 
+                                                   -> {hyperplane; intercept = Float.of_string intercept; class1; class2;}
     | _ -> failwith "improper file formatting"
 
   (* train a binary classifier on two playlists represented as tensors *)
@@ -44,18 +45,21 @@ module SVM_Model = struct
     in match p1, p2 with 
     | {name = class1; _}, {name = class2; _} 
       -> LinearSVC.fit clf ~x ~y |> fun svc -> {hyperplane = (LinearSVC.coef_ svc); 
-                                                intercept=(Array.get (Np.Ndarray.to_float_array @@ LinearSVC.intercept_ svc) 0); class1; class2}
+                                                intercept=(Array.get (Np.Ndarray.to_float_array 
+                                                                      @@ LinearSVC.intercept_ svc) 0); class1; class2}
 
   let predict_score (hyperplane: Np.Ndarray.t) (intercept: float) (features: Np.Ndarray.t) : float =
     let normalize = Np.square hyperplane |> Np.sum |> Np.Ndarray.to_float_array
                     |> fun (arr) -> Array.get arr 0 |> Float.sqrt
     in Float.(/) 
-      (Float.(+) intercept @@ Array.get (Np.Ndarray.to_float_array @@ 
-                                         Np.dot ~b:(Np.reshape ~newshape:[(Np.Ndarray.size features);] features) (Np.reshape ~newshape:[(Np.Ndarray.size hyperplane);] hyperplane )) 0) normalize
+      (Float.(+) intercept @@ Array.get (Np.Ndarray.to_float_array 
+                                         @@ Np.dot ~b:(Np.reshape ~newshape:[(Np.Ndarray.size features);] features) 
+                                           (Np.reshape ~newshape:[(Np.Ndarray.size hyperplane);] hyperplane )) 0) normalize
 
   let predict (svc: t) (features: Np.Ndarray.t) : bool =
     match svc with 
-    | {hyperplane; intercept; _} ->Float.(<=) 0. @@ (predict_score hyperplane intercept features |> fun s -> Printf.printf "score: %f" s; s)
+    | {hyperplane; intercept; _} ->Float.(<=) 0. 
+      @@ (predict_score hyperplane intercept features |> fun s -> Printf.printf "score: %f" s; s)
 
   let classes (svc: t) : string * string = 
     match svc with
@@ -64,7 +68,8 @@ module SVM_Model = struct
   let equal (svm1: t) (svm2: t) : bool =
     Array.equal (fun f1 f2 -> Float.(-) f1 f2 
                               |> Float.abs 
-                              |>  Float.(>) 0.001) (Np.Ndarray.to_float_array svm1.hyperplane) @@ Np.Ndarray.to_float_array svm2.hyperplane
+                              |>  Float.(>) 0.001) (Np.Ndarray.to_float_array svm1.hyperplane) 
+    @@ Np.Ndarray.to_float_array svm2.hyperplane
     && Float.(=) svm1.intercept svm2.intercept
     && String.(=) svm1.class1 svm2.class1
     && String.(=) svm1.class2 svm2.class2

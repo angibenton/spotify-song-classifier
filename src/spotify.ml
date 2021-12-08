@@ -38,13 +38,13 @@ let get_promise_with_timeout ~time ~f =
     ; (Lwt_unix.sleep time >|= fun () -> `Timeout)
     ]
 
-  let get_error_msg (body: string): string = 
-    body 
-    |> Yojson.Safe.from_string 
-    |> Yojson.Safe.Util.member "error"
-    |> Yojson.Safe.Util.member "message"
-    |> Yojson.Safe.to_string
-    |> String.filter ~f:(fun c -> Char.(<>) c '"') 
+let get_error_msg (body: string): string = 
+  body 
+  |> Yojson.Safe.from_string 
+  |> Yojson.Safe.Util.member "error"
+  |> Yojson.Safe.Util.member "message"
+  |> Yojson.Safe.to_string
+  |> String.filter ~f:(fun c -> Char.(<>) c '"') 
 
 (* ------- ACCESS TOKEN NETWORK FUNCTIONS ------- *)
 
@@ -125,10 +125,10 @@ let request_song_features_batch (ids_comma_sep: string) (api_token: string): str
 
 let yojson_list_remove_nulls (ls: Yojson.Safe.t list): Yojson.Safe.t list = 
   List.filter ~f:(fun elem -> 
-    match elem with 
-    | `Null -> false 
-    | _ -> true) 
-  ls
+      match elem with 
+      | `Null -> false 
+      | _ -> true) 
+    ls
 
 let get_field_remove_quotes (field: string) (obj: string): string = 
   obj 
