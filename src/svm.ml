@@ -59,7 +59,7 @@ module SVM_Model = struct
   let predict (svc: t) (features: Np.Ndarray.t) : bool =
     match svc with 
     | {hyperplane; intercept; _} ->Float.(<=) 0. 
-      @@ (predict_score hyperplane intercept features |> fun s -> Printf.printf "score: %f" s; s)
+      @@ predict_score hyperplane intercept features
 
   let classes (svc: t) : string * string = 
     match svc with

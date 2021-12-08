@@ -146,14 +146,14 @@ let test_svm_train_predict _ =
   assert_bool "Model 2 misclassifies its positive song" 
   @@ SVM_Model.predict svm_2 @@ pos_song_2.features_vector;
   assert_bool "Model 2 misclassifies its negative song" 
-  @@ not @@ SVM_Model.predict svm_2 @@ neg_song_2.features_vector );
+  @@ not @@ SVM_Model.predict svm_2 @@ neg_song_2.features_vector;
 assert_bool "SVM should train deterministically" (
   (SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2, SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2)
   |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
 assert_bool "Model 3 misclassifies its positive song" 
-@@ SVM_Model.predict svm_3 @@ pos_song_3.features_vector);
+@@ SVM_Model.predict svm_3 @@ pos_song_3.features_vector;
 assert_bool "Model 3 misclassifies its negative song" 
-@@ not @@ SVM_Model.predict svm_3 @@ neg_song_3.features_vector);
+@@ not @@ SVM_Model.predict svm_3 @@ neg_song_3.features_vector;
 assert_bool "SVM should train deterministically" (
   (SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3, SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3)
   |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
