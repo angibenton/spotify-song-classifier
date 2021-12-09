@@ -27,7 +27,7 @@ module SVM_Model = struct
   (* open up a model file with a given filename, parse a model object from it *)
   let load (file: string) : t =
     match Stdio.In_channel.read_lines file with 
-    | class1 :: class2 :: scale_arr :: shift_arr :: intercept :: hyper_arr :: [] 
+    | class1 :: class2 :: shift_arr :: scale_arr :: intercept :: hyper_arr :: [] 
       -> {hyperplane = txt_to_vec hyper_arr; intercept = Float.of_string intercept; 
           class1; class2; shift = txt_to_vec shift_arr; scale = txt_to_vec scale_arr}
     | _ -> failwith "improper file formatting"

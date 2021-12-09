@@ -105,12 +105,12 @@ let classify =
                   @@ "Loading model from " ^ "./models/" ^ filename ^ "...\n";
                   SVM_Model.load @@ "./models/" ^ filename 
                   |> fun (svm) -> let%lwt token = get_new_api_token () in 
-                  Stdio.print_string "Loading song..."; 
+                  Stdio.print_string "Loading song...\n"; 
                   let%lwt s = song_of_id song token 
                   in Stdio.print_string "Classifying song...\n"; 
                   SVM_Classification.classify svm s
                   |> fun (p) -> Stdio.print_string 
-                  @@ "Song classified as a member of \"" ^ p ^ "\""; 
+                  @@ "Song classified as a member of \"" ^ p ^ "\"\n"; 
                   Lwt.return ();
         in Lwt_main.run classify_monadic)
 
@@ -123,7 +123,7 @@ let test =
       and dataset_folder = flag "--dataset-folder" (required Filename.arg_type)
           ~doc:" The positive test playlist id"
       in
-      fun () -> Stdio.print_string @@ "Loading dataset from " ^ "./datasets/" ^ dataset_folder; 
+      fun () -> Stdio.print_string @@ "Loading dataset from " ^ "./datasets/" ^ dataset_folder ^ "\n"; 
         SVM_Classification.load_dataset @@ "./datasets/" ^ dataset_folder |>
         fun d -> 
         Stdio.print_string @@ "Loading model from " ^ "./models/" ^ model_file ^ "...\n";
