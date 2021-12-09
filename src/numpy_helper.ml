@@ -29,6 +29,7 @@ let matrix_to_string (matrix: Np.Ndarray.t) : string =
        ~f:(fun index -> rows matrix index (index + 1)))
 
 let txt_to_vec (line: string) : Np.Ndarray.t =
+  if String.(=) "none" line then Np.empty [0] else
   String.split ~on:' ' line 
   |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
   |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 

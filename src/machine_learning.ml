@@ -63,22 +63,21 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
     save_playlist d.neg_valid @@ folder ^ "/neg_val";
     save_playlist d.neg_test @@ folder ^ "/neg_test";
     let f = Stdio.Out_channel.create @@ folder ^ "/preprocess"
-    in Stdio.Out_channel.output_string f @@ vector_to_string d.shift ^ "\n" ^ 
-                                            vector_to_string d.scale;
+    in Stdio.Out_channel.output_string f @@ (vector_to_string d.shift |> fun s -> if String.is_empty s then "none" else s) ^ "\n" ^ 
+    (vector_to_string d.scale |> fun s -> if String.is_empty s then "none" else s);
     Stdio.Out_channel.flush f;
     Stdio.Out_channel.close f
   let load_dataset (folder: string) : dataset =
-    match Stdio.In_channel.read_lines @@ folder ^ "/preprocess" with 
+    (match Stdio.In_channel.read_lines @@ folder ^ "/preprocess" with 
     | shift :: scale :: _ -> {pos_train = load_playlist @@ folder ^ "/pos_train";
-                              pos_valid = load_playlist @@ folder ^ "/pos_val";
-                              pos_test = load_playlist @@ folder ^ "/pos_test";
-                              neg_train = load_playlist @@ folder ^ "/neg_train";
-                              neg_valid = load_playlist @@ folder ^ "/neg_val";
-                              neg_test = load_playlist @@ folder ^ "/neg_test"; 
-                              shift = txt_to_vec shift;
-                              scale = txt_to_vec scale }
-    | _ -> failwith "improper file formatting"
-
+    pos_valid = load_playlist @@ folder ^ "/pos_val";
+    pos_test = load_playlist @@ folder ^ "/pos_test";
+    neg_train = load_playlist @@ folder ^ "/neg_train";
+    neg_valid = load_playlist @@ folder ^ "/neg_val";
+    neg_test = load_playlist @@ folder ^ "/neg_test"; 
+    shift = txt_to_vec shift; scale = txt_to_vec scale}
+    | _ -> failwith "improper file formatting")
+    
 
   let split ((pos, neg): (playlist * playlist)) (valid: float) (test: float) (preprocess: (float * float) list) : dataset =
     let pos_valid_bound = Np.size ~axis:0 pos.features_matrix 

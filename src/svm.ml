@@ -17,8 +17,8 @@ module SVM_Model = struct
     in match svc with |
       {hyperplane; intercept; class1; class2; shift; scale} 
       -> Stdio.Out_channel.output_string f 
-           (class1 ^ "\n" ^ class2 ^ "\n" ^ vector_to_string shift ^ "\n" 
-            ^ vector_to_string scale ^ "\n" ^ Float.to_string intercept ^ "\n" ^ 
+           (class1 ^ "\n" ^ class2 ^ "\n" ^ (vector_to_string shift |> fun s -> if String.is_empty s then "none" else s) ^ "\n" 
+            ^ (vector_to_string scale |> fun s -> if String.is_empty s then "none" else s) ^ "\n" ^ Float.to_string intercept ^ "\n" ^ 
             vector_to_string hyperplane);
       Stdio.Out_channel.flush f;
       Stdio.Out_channel.close f

@@ -52,8 +52,8 @@ let download =
                                       -> SVM_Classification.split classes valid test preprocess 
                                          |> fun d 
                                          -> Stdio.print_string 
-                                         @@ "Saving dataset to ./datasets/...\n" 
-                                            ^ filename; 
+                                         @@ "Saving dataset to ./datasets/" 
+                                            ^ filename ^ "...\n"; 
                                          SVM_Classification.save_dataset d 
                                          @@ "./datasets/" ^ filename;
                in (pos, neg) |> save |> fun () -> Stdio.print_string "Saved dataset.\n"; 
@@ -78,7 +78,7 @@ let train =
       fun () -> if 0 = String.length metric && 1 < List.length cs 
         then failwith "Must provide evalutation metric optimizer if multiple hyperparameters
            provided for tuning" else
-          Stdio.print_string "Loading dataset"; 
+          Stdio.print_string "Loading dataset...\n"; 
         SVM_Classification.load_dataset @@ "./datasets/" ^ dataset_folder |>
         fun d -> Stdio.print_string "Training model…\n"; 
         (match cs with
