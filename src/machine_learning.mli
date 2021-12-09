@@ -3,8 +3,9 @@ open Numpy_helper
 
 type confusion_matrix = {tp: int; fp: int; tn: int; fn: int}
 type dataset = {pos_train: playlist; pos_valid: playlist; 
-                pos_test: playlist; neg_train: playlist; 
-                neg_valid: playlist; neg_test: playlist}
+pos_test: playlist; neg_train: playlist; 
+neg_valid: playlist; neg_test: playlist; 
+shift: Np.Ndarray.t; scale: Np.Ndarray.t}
 
 module type Model = sig 
   (* the model *)
@@ -23,15 +24,16 @@ module type Model = sig
   (* give the class names of the model *)
   val classes: t -> string * string
   val equal: t -> t -> bool
+  val preprocess_features: t -> (float * float) list
 end 
 
 module type Classification = sig
   type t
   val randomize : playlist -> playlist
   val balance_classes : (playlist * playlist) -> (playlist * playlist)
-  val normalize : (playlist * playlist) -> (playlist * playlist)
-  val standardize : (playlist * playlist) -> (playlist * playlist)
-  val split : (playlist * playlist) -> float -> float -> dataset
+  val normalize : (playlist * playlist) -> (playlist * playlist * ((float * float) list))
+  val standardize : (playlist * playlist) -> (playlist * playlist * ((float * float) list))
+  val split : (playlist * playlist) -> float -> float -> (float * float) list -> dataset
   val save_dataset : dataset -> string -> unit
   val load_dataset : string -> dataset
   (* classify a song represented by a vector into one of the two playlists *)

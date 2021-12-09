@@ -40,24 +40,22 @@ let download =
                let save ((pos, neg): (playlist * playlist)) : unit = 
                  (if random then (SVM_Classification.randomize pos, 
                                   SVM_Classification.randomize neg) else (pos, neg))
-                 |> fun classes -> (if norm 
-                                    then SVM_Classification.normalize classes 
-                                    else classes)
-                                   |> fun classes 
-                                   -> (if standard 
-                                       then SVM_Classification.standardize classes 
-                                       else classes) |> fun classes 
-                                      -> (if balance 
-                                          then SVM_Classification.balance_classes 
-                                              classes else classes)
-                                         |> fun classes 
-                                         -> SVM_Classification.split classes valid test 
-                                            |> fun d 
-                                            -> Stdio.print_string 
-                                            @@ "Saving dataset to ./datasets/...\n" 
-                                               ^ filename; 
-                                            SVM_Classification.save_dataset d 
-                                            @@ "./datasets/" ^ filename;
+                 |> fun (pos, neg) -> (if norm 
+                                       then SVM_Classification.normalize (pos, neg) 
+                                       else if standard 
+                                       then SVM_Classification.standardize (pos, neg)
+                                       else (pos, neg, [])) |> fun (pos, neg, preprocess) ->  
+                                      (if balance 
+                                       then SVM_Classification.balance_classes 
+                                           (pos, neg) else (pos, neg))
+                                      |> fun classes 
+                                      -> SVM_Classification.split classes valid test preprocess 
+                                         |> fun d 
+                                         -> Stdio.print_string 
+                                         @@ "Saving dataset to ./datasets/...\n" 
+                                            ^ filename; 
+                                         SVM_Classification.save_dataset d 
+                                         @@ "./datasets/" ^ filename;
                in (pos, neg) |> save |> fun () -> Stdio.print_string "Saved dataset.\n"; 
                   Lwt.return ();
           in Lwt_main.run download_monadic)
@@ -77,13 +75,16 @@ let train =
       and metric = flag "--metric" (optional_with_default "" string)
           ~doc: "Metric to optimize in tuning (either \"accuracy\" or \"f1\")"
       in
-      fun () -> Stdio.print_string "Loading dataset"; 
+      fun () -> if 0 = String.length metric && 1 < List.length cs 
+        then failwith "Must provide evalutation metric optimizer if multiple hyperparameters
+           provided for tuning" else
+          Stdio.print_string "Loading dataset"; 
         SVM_Classification.load_dataset @@ "./datasets/" ^ dataset_folder |>
         fun d -> Stdio.print_string "Training model…\n"; 
         (match cs with
-         | [] -> SVM_Model.train 1.0 d.pos_train d.neg_train
-         | c :: [] -> SVM_Model.train c d.pos_train d.neg_train 
-         | _ -> SVM_Model.tune cs d.pos_train d.neg_train 
+         | [] -> SVM_Model.train {reg = 1.0; shift = d.shift; scale = d.scale} d.pos_train d.neg_train
+         | c :: [] -> SVM_Model.train {reg = c; shift = d.shift; scale = d.scale}  d.pos_train d.neg_train 
+         | _ -> SVM_Model.tune (List.map cs ~f:(fun c : SVM_Model.hyperparameters -> {reg = c; shift = d.shift; scale = d.scale})) d.pos_train d.neg_train 
                 |> fun svms -> SVM_Classification.tune svms d.pos_valid d.neg_valid 
                   (if String.equal "accuracy" metric 
                    then SVM_Classification.accuracy else SVM_Classification.f1_score)) 

@@ -3,6 +3,7 @@ open OUnit2
 open Machine_learning
 open Svm
 open Spotify
+open Numpy_helper
 
 let float_equals_epsilon = fun f1 f2 -> Float.(-) f1 f2 |> Float.abs |>  Float.(>) 0.001;;
 
@@ -96,10 +97,11 @@ let pos_playlist_3 = {name = "Positive Playlist 3"; pid = "123";
                       features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_3.features_vector |])};;
 let neg_playlist_3 = {name = "Negative Playlist 3"; pid = "124"; 
                       features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_3.features_vector |])};;
+let standard_hyper : SVM_Model.hyperparameters = {reg = 1.0; shift = Np.empty [0]; scale = Np.empty [0]};;
 
-let svm_1 = SVM_Model.train 1.0 pos_playlist_1 neg_playlist_1
-let svm_2 = SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2
-let svm_3 = SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3
+let svm_1 = SVM_Model.train standard_hyper pos_playlist_1 neg_playlist_1
+let svm_2 = SVM_Model.train standard_hyper pos_playlist_2 neg_playlist_2
+let svm_3 = SVM_Model.train standard_hyper  pos_playlist_3 neg_playlist_3
 
 let test_classify _ = 
   assert_equal "Positive Playlist 1" @@ SVM_Classification.classify svm_1 pos_song_1;
@@ -141,21 +143,21 @@ let test_svm_train_predict _ =
   assert_bool "Model 1 misclassifies its negative song" 
   @@ not @@ SVM_Model.predict svm_1 @@ neg_song_1.features_vector;
   assert_bool "SVM should train deterministically" (
-    (SVM_Model.train 1.0 pos_playlist_1 neg_playlist_1, SVM_Model.train 1.0 pos_playlist_1 neg_playlist_1)
+    (SVM_Model.train standard_hyper pos_playlist_1 neg_playlist_1, SVM_Model.train standard_hyper pos_playlist_1 neg_playlist_1)
     |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
   assert_bool "Model 2 misclassifies its positive song" 
   @@ SVM_Model.predict svm_2 @@ pos_song_2.features_vector;
   assert_bool "Model 2 misclassifies its negative song" 
   @@ not @@ SVM_Model.predict svm_2 @@ neg_song_2.features_vector;
 assert_bool "SVM should train deterministically" (
-  (SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2, SVM_Model.train 1.0 pos_playlist_2 neg_playlist_2)
+  (SVM_Model.train standard_hyper pos_playlist_2 neg_playlist_2, SVM_Model.train standard_hyper pos_playlist_2 neg_playlist_2)
   |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
 assert_bool "Model 3 misclassifies its positive song" 
 @@ SVM_Model.predict svm_3 @@ pos_song_3.features_vector;
 assert_bool "Model 3 misclassifies its negative song" 
 @@ not @@ SVM_Model.predict svm_3 @@ neg_song_3.features_vector;
 assert_bool "SVM should train deterministically" (
-  (SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3, SVM_Model.train 1.0 pos_playlist_3 neg_playlist_3)
+  (SVM_Model.train standard_hyper pos_playlist_3 neg_playlist_3, SVM_Model.train standard_hyper pos_playlist_3 neg_playlist_3)
   |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
 ;;
 

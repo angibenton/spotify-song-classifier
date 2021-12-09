@@ -197,24 +197,14 @@ let playlist_of_id (pid: string) (api_token: string): playlist Lwt.t =
 let save_playlist (p: playlist) (file: string) : unit =
   let f = Stdio.Out_channel.create file
   in Stdio.Out_channel.output_string f 
-    (p.name ^ "\n" ^ p.pid ^ List.fold 
-       ~init:"" ~f:(fun s row -> s ^ "\n" ^ Array.fold ~init:"" 
-                                   ~f:(fun s elem -> s ^ " " ^ elem) row) 
-       (List.init (Np.size ~axis:0 p.features_matrix) 
-          ~f:(fun index -> rows p.features_matrix index (index + 1) 
-                           |> Np.Ndarray.to_float_array |> Array.map ~f:Float.to_string)));
+    @@ p.name ^ "\n" ^ p.pid ^ (matrix_to_string p.features_matrix);
   Stdio.Out_channel.flush f;
   Stdio.Out_channel.close f
 
 let load_playlist (file: string) : playlist =
   match Stdio.In_channel.read_lines file with 
   | name :: pid :: matrix 
-    -> List.filter ~f:(fun s-> not @@ String.is_empty s) matrix 
-       |> List.map ~f:(fun row -> String.split ~on:' ' row 
-                                  |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
-                                  |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 
-                                  |> Np.reshape ~newshape:[1; (List.length feature_names)]) 
-       |> matrix_of_vector_list |> fun features_matrix -> {features_matrix; name; pid;}
+    ->  {features_matrix = txt_to_matrix matrix; name; pid;}
   | _ -> failwith "improper file formatting"
 
 let replace_features (p: playlist) (f: Np.Ndarray.t) : playlist =

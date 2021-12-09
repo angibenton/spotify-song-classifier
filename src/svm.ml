@@ -1,5 +1,4 @@
-module Np = Np.Numpy
-
+open Numpy_helper
 open Sklearn.Svm
 open Core
 open Machine_learning
@@ -7,19 +6,20 @@ open Spotify
 
 module SVM_Model = struct
   (* the model *)
-  type t = {hyperplane: Np.Ndarray.t; intercept: float; class1: string; class2: string}
+  type t = {hyperplane: Np.Ndarray.t; intercept: float; 
+            class1: string; class2: string; shift: Np.Ndarray.t; scale: Np.Ndarray.t}
 
-  type hyperparameters = float
+  type hyperparameters = {reg: float; shift: Np.Ndarray.t; scale: Np.Ndarray.t}
 
   (* save a model into a file with a give filename *)
   let save (svc: t) (file: string) : unit = 
     let f = Stdio.Out_channel.create file
     in match svc with |
-      {hyperplane; intercept; class1; class2} 
+      {hyperplane; intercept; class1; class2; shift; scale} 
       -> Stdio.Out_channel.output_string f 
-           (class1 ^ "\n" ^ class2 ^ "\n" ^ Float.to_string intercept ^ "\n" ^
-            (Array.fold (Np.Ndarray.to_float_array hyperplane) 
-               ~init:"" ~f:(fun s v -> s ^ " " ^ Float.to_string v)));
+           (class1 ^ "\n" ^ class2 ^ "\n" ^ vector_to_string shift ^ "\n" 
+            ^ vector_to_string scale ^ "\n" ^ Float.to_string intercept ^ "\n" ^ 
+            vector_to_string hyperplane);
       Stdio.Out_channel.flush f;
       Stdio.Out_channel.close f
 
@@ -27,12 +27,9 @@ module SVM_Model = struct
   (* open up a model file with a given filename, parse a model object from it *)
   let load (file: string) : t =
     match Stdio.In_channel.read_lines file with 
-    | class1 :: class2 :: intercept ::arr :: [] 
-      -> String.split ~on:' ' arr 
-         |> List.filter ~f:(fun (s) -> not @@ String.is_empty s)
-         |> List.map ~f:Float.of_string |> Np.Ndarray.of_float_list 
-         |> fun (hyperplane) 
-         -> {hyperplane; intercept = Float.of_string intercept; class1; class2;}
+    | class1 :: class2 :: scale_arr :: shift_arr :: intercept :: hyper_arr :: [] 
+      -> {hyperplane = txt_to_vec hyper_arr; intercept = Float.of_string intercept; 
+          class1; class2; shift = txt_to_vec shift_arr; scale = txt_to_vec scale_arr}
     | _ -> failwith "improper file formatting"
 
   (* train a binary classifier on two playlists represented as tensors *)
@@ -43,13 +40,15 @@ module SVM_Model = struct
            -> (Np.append ~axis:0 ~arr:features1 () ~values:features2), 
               (Array.append arr1 @@ Array.init (Np.size ~axis:0 features2) ~f:(fun _ -> -1) 
                |> Np.Ndarray.of_int_array)
-    in let clf = LinearSVC.create ~c ~dual:false () 
+    in let clf = LinearSVC.create ~c:c.reg ~dual:false () 
     in match p1, p2 with 
     | {name = class1; _}, {name = class2; _} 
       -> LinearSVC.fit clf ~x ~y 
          |> fun svc -> {hyperplane = (LinearSVC.coef_ svc); 
                         intercept=(Array.get (Np.Ndarray.to_float_array 
-                                              @@ LinearSVC.intercept_ svc) 0); class1; class2}
+                                              @@ LinearSVC.intercept_ svc) 0); 
+                                              class1; class2; shift = c.shift; 
+                                              scale = c.scale}
 
   let tune (all_c: hyperparameters list) (p1: playlist) (p2: playlist) : t list =
     List.map all_c ~f:(fun c -> train c p1 p2)
@@ -80,6 +79,10 @@ module SVM_Model = struct
     && Float.(=) svm1.intercept svm2.intercept
     && String.(=) svm1.class1 svm2.class1
     && String.(=) svm1.class2 svm2.class2
+
+  let preprocess_features (svm: t) : (float * float) list = 
+    List.zip_exn (Np.Ndarray.to_float_array svm.shift |> Array.to_list)
+    (Np.Ndarray.to_float_array svm.scale |> Array.to_list)
 end 
 
 module SVM_Classification = Classification(SVM_Model)
