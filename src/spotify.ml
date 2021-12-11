@@ -70,7 +70,7 @@ let request_token_return_body () : string t =
   | `Done (resp, body) -> handle_token_response_get_body resp body 
 
 
-  
+
 (* ------- SONG DATA NETWORK FUNCTIONS ------- *) 
 
 let general_api_request (uri_suffix: string) (description: string) (api_token: string): string t =
@@ -176,10 +176,22 @@ let ids_from_playlist_body (playlist_metadata_body: string): string =
 
 
 (* --------- EXPOSED API --------- *)
+
 type song = {name: string; sid: string; features_vector: Np.Ndarray.t;}
 
 type playlist = {name: string; pid: string; features_matrix: Np.Ndarray.t;}
 
+let print_song (s: song): _ = 
+  printf "name: %s\n" s.name;
+  printf "id: %s\n" s.sid;
+  printf "features: %s\n" @@ Np.Ndarray.to_string s.features_vector; 
+;;
+
+let print_playlist (p: playlist): _ = 
+  printf "name: %s\n" p.name;
+  printf "id: %s\n" p.pid;
+  printf "features: %s\n" @@ Np.Ndarray.to_string p.features_matrix; 
+;;
 
 let get_new_api_token _ : string Lwt.t = 
   let%lwt body = request_token_return_body () in  
@@ -221,3 +233,4 @@ let song_of_id (sid: string) (api_token: string): song Lwt.t =
   | _ -> 
     let features_vector = song_features_yojson_to_vector features_body_yojson in
     Lwt.return {name; sid; features_vector;}
+
