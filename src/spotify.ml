@@ -70,7 +70,7 @@ let request_token_return_body () : string t =
   | `Done (resp, body) -> handle_token_response_get_body resp body 
 
 
-
+  
 (* ------- SONG DATA NETWORK FUNCTIONS ------- *) 
 
 let general_api_request (uri_suffix: string) (description: string) (api_token: string): string t =
@@ -79,8 +79,8 @@ let general_api_request (uri_suffix: string) (description: string) (api_token: s
     let headers = 
       Header.init ()
       |> fun h -> Header.add h "Content-Type" "application/json"
-                  |> fun h -> Header.add h "Authorization" ("Bearer " ^ api_token) 
-                              |> fun h -> Header.add h "Accept" "application/json"
+      |> fun h -> Header.add h "Authorization" ("Bearer " ^ api_token) 
+      |> fun h -> Header.add h "Accept" "application/json"
     in
     Client.call ~headers `GET uri
   in

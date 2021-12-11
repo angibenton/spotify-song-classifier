@@ -1,5 +1,6 @@
 open Core
 open OUnit2
+open OUnitLwt
 open Machine_learning
 open Svm
 open Spotify
@@ -149,16 +150,16 @@ let test_svm_train_predict _ =
   @@ SVM_Model.predict svm_2 @@ pos_song_2.features_vector;
   assert_bool "Model 2 misclassifies its negative song" 
   @@ not @@ SVM_Model.predict svm_2 @@ neg_song_2.features_vector;
-assert_bool "SVM should train deterministically" (
-  (SVM_Model.train standard_hyper pos_playlist_2 neg_playlist_2, SVM_Model.train standard_hyper pos_playlist_2 neg_playlist_2)
-  |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
-assert_bool "Model 3 misclassifies its positive song" 
-@@ SVM_Model.predict svm_3 @@ pos_song_3.features_vector;
-assert_bool "Model 3 misclassifies its negative song" 
-@@ not @@ SVM_Model.predict svm_3 @@ neg_song_3.features_vector;
-assert_bool "SVM should train deterministically" (
-  (SVM_Model.train standard_hyper pos_playlist_3 neg_playlist_3, SVM_Model.train standard_hyper pos_playlist_3 neg_playlist_3)
-  |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
+  assert_bool "SVM should train deterministically" (
+    (SVM_Model.train standard_hyper pos_playlist_2 neg_playlist_2, SVM_Model.train standard_hyper pos_playlist_2 neg_playlist_2)
+    |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
+  assert_bool "Model 3 misclassifies its positive song" 
+  @@ SVM_Model.predict svm_3 @@ pos_song_3.features_vector;
+  assert_bool "Model 3 misclassifies its negative song" 
+  @@ not @@ SVM_Model.predict svm_3 @@ neg_song_3.features_vector;
+  assert_bool "SVM should train deterministically" (
+    (SVM_Model.train standard_hyper pos_playlist_3 neg_playlist_3, SVM_Model.train standard_hyper pos_playlist_3 neg_playlist_3)
+    |> fun (svm_1, svm_2) -> SVM_Model.equal svm_1 svm_2);
 ;;
 
 let test_svm_equal _ =
@@ -207,10 +208,107 @@ let machine_learning_tests =
     "F1 Score" >:: test_f1;
   ]
 
+(* ----- Spotify Tests - Asynchronous!! Tests return unit Lwt.t rather than unit ------ *)
+
+(* test data *)
+let number_of_features = 13;;
+let test_playlist_id = "01keRwFGHF7Rw1wnPwbyB1";;
+let test_song_id_vienna = "4U45aEWtQhrm8A5mxPaFZ7";;
+let test_song_id_chain = "5e9TFTbltYBg2xThimr0rU";;
+let test_song_id_wish = "1HzDhHApjdjXPLHF6GGYhu";;
+let test_song_id_skylines = "3VqJUdav5hRAEAvppYIVnT";;
+let expired_token = "BQCeq-iZTX3AWwOhNVt9fM3vZBicMy8pVSINCAjgJ-Yge4PnF-OPae-SMVLJdzk-YiM10yFxtnZrntcxo2w";;
+let ill_formed_token = "MyToken123";;
+let ill_formed_song_id = "MySongId123";;
+let ill_formed_playlist_id = "MySongId123";;
+
+(* check if token is well-formed *)
+(* other spotify api tests implicitly check if the access token is accepted by the server *)
+let test_get_token _ = 
+  let%lwt token = get_new_api_token () in
+  assert_equal 83 @@ String.length token;
+  assert_equal token @@ String.filter ~f:(fun c -> Char.is_alphanum c || Char.(=) c '-' || Char.(=) c '_') token;
+  Lwt.return (); 
+;;
+
+(* check song contains expected data *)
+let test_get_song _ = 
+  let%lwt token = get_new_api_token () in
+  let%lwt chain = song_of_id test_song_id_chain token in
+  let%lwt skylines = song_of_id test_song_id_skylines token in
+  assert_equal "The Chain - 2004 Remaster" @@ chain.name;
+  assert_equal "Skylines and Turnstiles" @@ skylines.name;
+  assert_equal test_song_id_chain @@ chain.sid;
+  assert_equal test_song_id_skylines @@ skylines.sid;
+  assert_equal [|1; number_of_features;|] @@ Np.shape chain.features_vector;
+  assert_equal [|1; number_of_features;|] @@ Np.shape skylines.features_vector;
+  Lwt.return (); 
+;;
+
+(* check playlist contains expected data *)
+let test_get_playlist _ = 
+  let%lwt token = get_new_api_token () in
+  let%lwt test_playlist = playlist_of_id test_playlist_id token in
+  assert_equal "TestPlaylist" @@ test_playlist.name;
+  assert_equal test_playlist_id @@ test_playlist.pid;
+  (* this is my own playlist, definitely has 3 songs *)
+  assert_equal [|3; number_of_features;|] @@ Np.shape test_playlist.features_matrix;
+  Lwt.return (); 
+;;
+
+(* helper for testing if an asynchronous function would raise an exception with a given  *)
+let assert_promise_would_raise_exception (promise: 'a Lwt.t) (message: string): unit Lwt.t = 
+  Lwt.catch (fun _ -> let%lwt _ = promise in Lwt.return ();)
+  @@ (fun exn -> match exn with 
+      | Stdlib.Failure s -> assert_equal s @@ message; Lwt.return (); 
+      | _ -> assert false;
+    )
+;;
+
+(* expired and bad tokens used for song_of_id and playlist_of_id *)
+let test_bad_token_exceptions _ = 
+  let%lwt () = assert_promise_would_raise_exception (song_of_id test_song_id_vienna ill_formed_token) 
+      ("request features for song (id = " ^ test_song_id_vienna ^ ") failed: 401 Invalid access token") in  
+  let%lwt () = assert_promise_would_raise_exception (song_of_id test_song_id_vienna expired_token) 
+      ("request features for song (id = " ^ test_song_id_vienna ^ ") failed: 401 The access token expired") in 
+  let%lwt () = assert_promise_would_raise_exception (playlist_of_id test_playlist_id ill_formed_token)
+      ("request metadata for playlist (id = " ^ test_playlist_id ^ ") failed: 401 Invalid access token") in 
+  let%lwt () = assert_promise_would_raise_exception (playlist_of_id test_playlist_id expired_token)
+      ("request metadata for playlist (id = " ^ test_playlist_id ^ ") failed: 401 The access token expired") in 
+  Lwt.return (); 
+;;
+
+(* exceptions from using a good token, but bad id *)
+let test_bad_id_exceptions _ = 
+  let%lwt token = get_new_api_token () in
+  (* ill-formed ids *)
+  let%lwt () = assert_promise_would_raise_exception (song_of_id ill_formed_song_id token)
+      ("request features for song (id = " ^ ill_formed_song_id ^ ") failed: 400 invalid request") in 
+  let%lwt () = assert_promise_would_raise_exception (playlist_of_id ill_formed_playlist_id token)
+      ("request metadata for playlist (id = " ^ ill_formed_playlist_id ^ ") failed: 404 Invalid playlist Id") in 
+  (* requesting a song with the id of a playlist and vice versa *)
+  let%lwt () = assert_promise_would_raise_exception (song_of_id test_playlist_id token)
+      ("request features for song (id = " ^ test_playlist_id ^ ") failed: 404 analysis not found") in 
+  let%lwt () = assert_promise_would_raise_exception (playlist_of_id test_song_id_skylines token)
+      ("request metadata for playlist (id = " ^ test_song_id_skylines ^ ") failed: 404 Not found.") in 
+  Lwt.return (); 
+;;
+
+
+let spotify_tests =
+  "Spotify" >: test_list [
+    "Get Access Token" >:: lwt_wrapper test_get_token;
+    "Get Song" >:: lwt_wrapper test_get_song;
+    "Get Playlist" >:: lwt_wrapper test_get_playlist;
+    "Exceptions Due to Bad Token" >:: lwt_wrapper test_bad_token_exceptions; 
+    "Exceptions Due to Bad Song/Playlist Id" >:: lwt_wrapper test_bad_id_exceptions;
+  ]
+
 let series =
   "Final Project Tests" >::: [
     svm_tests;
     machine_learning_tests;
+    spotify_tests; 
   ]
 
 let () = 
