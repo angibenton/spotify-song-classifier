@@ -176,8 +176,8 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
   (* classify a song represented by a vector into one of the two playlists 
      true = first, false = second *)
   let classify (c: t) (s: song) : string =
-    Stdio.print_string @@ "orig:" ^ vector_to_string s.features_vector; (if 0 = List.length @@ Classifier.preprocess_features c then s else {features_vector = clean_features s.features_vector @@ Classifier.preprocess_features c; name = s.name; sid = s.sid}) |> fun cleaned -> 
-    Stdio.print_string @@ "\ncleaned: " ^vector_to_string cleaned.features_vector; match Classifier.classes c, cleaned with 
+    (if 0 = List.length @@ Classifier.preprocess_features c then s else {features_vector = clean_features s.features_vector @@ Classifier.preprocess_features c; name = s.name; sid = s.sid}) |> fun cleaned -> 
+    match Classifier.classes c, cleaned with 
     | (class1, class2), {features_vector; _} 
       -> if Classifier.predict c features_vector then class1 else class2
 
