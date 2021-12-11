@@ -27,8 +27,8 @@
  (libraries core sklearn numpy_helper machine_learning))
 
 (executables
- (names run test_spotify)
- (modules run test_spotify)
+ (names run)
+ (modules run)
  (libraries
   svm
   spotify
@@ -37,7 +37,6 @@
   cohttp-lwt-unix
   lwt 
   sklearn
-  ounit2
   yojson
   ppx_deriving_yojson.runtime)
  (preprocess

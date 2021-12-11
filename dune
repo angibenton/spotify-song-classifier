@@ -5,7 +5,6 @@
   src/svm.ml
   src/spotify.ml
   src/run.ml
-  src/test_spotify.ml
   src/dune
   tests/tests.ml
   tests/dune)
