@@ -10,6 +10,7 @@ MODELFILE=trap_vs_classical_model.txt
 
 source .venv/bin/activate
 dune build 
+rm -r ./datasets/$DATASETFOLDER
 dune exec -- ./src/run.exe download --pos-id $TRAPPLAYLISTID --neg-id $CLASSICALPLAYLISTID --dataset-folder $DATASETFOLDER --test 0.2 --val 0.2
 dune exec -- ./src/run.exe train --dataset-folder $DATASETFOLDER --model-file $MODELFILE
 dune exec -- ./src/run.exe test --dataset-folder $DATASETFOLDER --model-file $MODELFILE
