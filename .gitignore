@@ -49,5 +49,5 @@ pip-selfcheck.json
 
 # End of https://www.toptal.com/developers/gitignore/api/ocaml,venv
 
-# models are saved in .txt #
-*.txt
+# FILES ASSOC WITH RUNNING SPOTIFY-SONG-CLASSIFIER #
+*.coverage 
