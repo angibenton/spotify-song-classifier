@@ -23,8 +23,8 @@ let feature_names = [
 
 let spotify_api_credentials = "ZDgwMGZlMzgwOTAwNGRjZGI1NmViZTkwYjg2ZThlNzQ6ZGM0OTdiMWM2MjAwNDY1Y2JlZmYyNWE5ODhkY2YxYzk=";;
 let spotify_base_uri = "https://api.spotify.com/v1/";;
-let token_request_timeout = 10.;; 
-let data_request_timeout = 10.;;
+let token_request_timeout = 30.;; 
+let data_request_timeout = 30.;;
 
 
 (* --------- HELPERS - HIDDEN ---------- *)
