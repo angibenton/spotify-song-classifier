@@ -12,7 +12,7 @@ This command line application needs to be run within a python virtual environmen
 $ python3 -mvenv .venv \
 $ source .venv/bin/activate \
 $ pip install scikit-learn==0.23.2 numpy==1.19.4 scipy==1.5.4 pytest \
-$ [ run your dune commands ]
+$ [ run your dune commands ] \
 $ deactivate  
 
 ### Activate (subsequent uses): 
