@@ -7,7 +7,7 @@ Command-line application built in OCaml for classifying spotify songs into playl
 Jack Van Holland, Angi Benton
 
 # Spotify Song and Playlist IDs 
-Spotify provides unique identifiers for objects (song, album, artist, playlist, etc.). This project requires the user to input songs and playlists by their spotify ID because names can be ambiguous. The IDs are most easily accessed from the URL of the song/playlist, found through "share" -> "copy link". The ID is the last part of the path, before the question mark. 
+Spotify provides unique identifiers for objects (song, album, artist, playlist, etc.). This project requires the user to input songs and playlists by their spotify ID because names can be ambiguous. The IDs are most easily accessed from the URL of the song/playlist, found through "share" -> "copy link". The ID is the last part of the path, before any query parameters. 
 
 For example, here is the URL of a song:
 
