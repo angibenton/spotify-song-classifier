@@ -122,7 +122,7 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
     |> fun l -> replace_features p @@ matrix_of_vector_list l
 
   let balance_classes ((pos, neg): (playlist * playlist)) : (playlist * playlist) =
-    let len = Int.max (Np.size ~axis:0 pos.features_matrix) 
+    let len = Int.min (Np.size ~axis:0 pos.features_matrix) 
         (Np.size ~axis:0 neg.features_matrix)
     in (replace_features pos @@ rows pos.features_matrix 0 len,
         replace_features neg @@ rows neg.features_matrix 0 len)
@@ -134,32 +134,14 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
                  |> fun v -> Np.reshape ~newshape:[Np.size ~axis:0 features; 1] v) ()
     in List.foldi stat ~init:(Np.empty [Np.size ~axis:0 features; 0]) ~f 
 
-  let arr_min (arr: float array) : float =
-    Array.fold arr ~init:Float.infinity 
-      ~f:(fun min elem -> if Float.(<) elem min then elem else min)
-
-  let arr_max (arr: float array) : float =
-    Array.fold arr ~init:Float.neg_infinity 
-      ~f:(fun max elem -> if Float.(<) max elem then elem else max)
-
-  let arr_mean (arr: float array) : float =
-    Array.fold arr ~init:(0., 0.) 
-      ~f:(fun (sum, count) elem -> (Float.(+) sum elem, Float.(+) count 1.)) 
-    |> fun (sum, count) -> Float.(/) sum count
-
-  let arr_std (arr: float array) (mean: float): float =
-    Array.fold arr ~init:(0., 0.) 
-      ~f:(fun (sum, count) elem 
-           -> (Float.(+) sum @@ Float.square @@ Float.(-) elem mean, Float.(+) count 1.)) 
-    |> fun (sum, count) -> Float.sqrt @@ Float.(/) sum count
 
   let normalize ((pos, neg): (playlist * playlist)) : (playlist * playlist * ((float * float) list)) =
     let cols = List.init (Np.size ~axis:1 pos.features_matrix) 
         ~f:(fun col -> columns (Np.append ~axis:0 ~arr:pos.features_matrix 
                                   ~values:neg.features_matrix ()) col (col + 1) 
-                       |> Np.Ndarray.to_float_array)
+                       )
     in let min_max = 
-         List.map cols ~f:(fun arr -> (arr_min arr, Float.(-) (arr_min arr) (arr_max arr)))
+         List.map cols ~f:(fun arr -> (vec_min arr, Float.(-) (vec_max arr) (vec_min arr) |> fun scale -> (if Float.(<=) 0.0001 @@ Float.abs scale then scale else 1.0)))
     in (replace_features pos @@ clean_features pos.features_matrix min_max, 
         replace_features neg @@ clean_features neg.features_matrix min_max, min_max)
 
@@ -167,9 +149,9 @@ module Classification (Classifier: Model) : (Classification with type t = Classi
     let cols = List.init (Np.size ~axis:1 pos.features_matrix) 
         ~f:(fun col -> columns (Np.append ~axis:0 ~arr:pos.features_matrix 
                                   ~values:neg.features_matrix ()) col (col + 1) 
-                       |> Np.Ndarray.to_float_array)
+                       )
     in let mean_std = 
-         List.map cols ~f:(fun arr -> (arr_mean arr, arr_std arr @@ arr_mean arr))
+         List.map cols ~f:(fun arr -> (vec_mean arr, vec_std arr @@ vec_mean arr |> fun scale -> (if Float.(<=) 0.0001 @@ Float.abs scale then scale else 1.0)))
     in (replace_features pos @@ clean_features pos.features_matrix mean_std, 
         replace_features neg @@ clean_features neg.features_matrix mean_std, mean_std)  
 

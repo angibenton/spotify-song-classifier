@@ -6,6 +6,8 @@ open Svm
 open Spotify
 open Numpy_helper
 
+let float_equals_epsilon_custom = fun f1 f2 eps -> Float.(-) f1 f2 |> Float.abs |>  Float.(>) eps;;
+
 let float_equals_epsilon = fun f1 f2 -> Float.(-) f1 f2 |> Float.abs |>  Float.(>) 0.001;;
 
 let cm_1 = {tp = 5; fp = 0; fn = 6; tn = 4};;
@@ -98,6 +100,54 @@ let pos_playlist_3 = {name = "Positive Playlist 3"; pid = "123";
                       features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_3.features_vector |])};;
 let neg_playlist_3 = {name = "Negative Playlist 3"; pid = "124"; 
                       features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_3.features_vector |])};;
+
+let pos_song_4_1 = {name = "Positive Song 1"; sid = "3";
+                    features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                        [| 0.; 5.; 83.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 5.2; 89.1|]};;
+
+let pos_song_4_2 = {name = "Positive Song 1"; sid = "3";
+                    features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                        [| 0.; 87.2; 11.2; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.1; 2.2|]};;
+
+let pos_song_4_3 = {name = "Positive Song 1"; sid = "3";
+                    features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                        [| 0.; -1.9; 3.1; 3.2; 90.; 0.; 0.; 0.; 0.; 0.; 0.; 35.4; 0.5|]};;
+
+let neg_song_4 = {name = "Negative Song 3"; sid = "3";
+                  features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                      [| 0.; 42.; 0.; 87.; 0.; 21.; 0.; 67.; 0.; 0.; 0.; 90.2; -8.9|]};;
+
+let pos_song_5 = {name = "Negative Song 3"; sid = "3";
+                  features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                      [| 91.4; 3.2; 5.6; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; -89.; 2.13|]};;
+
+let neg_song_5_1 = {name = "Negative Song 3"; sid = "3";
+                    features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                        [| 0.; 8.2; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 53.2; 2.1;|]};;
+
+let neg_song_5_2 = {name = "Negative Song 3"; sid = "3";
+                    features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                        [| 3.2; 35.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 2.; 0.|]};;
+
+let neg_song_5_3 = {name = "Negative Song 3"; sid = "3";
+                        features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                            [| 9.2; 2.3; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 12.; 0.|]};;
+
+let pos_playlist_4 = {name = "Positive Playlist 3"; pid = "123"; 
+                      features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_4_1.features_vector; Np.Ndarray.to_float_array pos_song_4_2.features_vector; Np.Ndarray.to_float_array pos_song_4_3.features_vector; |])};;
+let neg_playlist_4 = {name = "Negative Playlist 3"; pid = "124"; 
+                      features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_4.features_vector |])};;
+
+let pos_playlist_5 = {name = "Positive Playlist 3"; pid = "123"; 
+                      features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_5.features_vector |])};;
+let neg_playlist_5 = {name = "Negative Playlist 3"; pid = "124"; 
+                      features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_5_1.features_vector; Np.Ndarray.to_float_array neg_song_5_2.features_vector;  Np.Ndarray.to_float_array neg_song_5_3.features_vector |])};;
+
+                      let pos_playlist_big = {name = "Positive Playlist 3"; pid = "123"; 
+                      features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_4_1.features_vector; Np.Ndarray.to_float_array pos_song_4_2.features_vector; Np.Ndarray.to_float_array pos_song_4_3.features_vector; Np.Ndarray.to_float_array pos_song_5.features_vector; Np.Ndarray.to_float_array pos_song_3.features_vector |])};;
+let neg_playlist_big = {name = "Negative Playlist 3"; pid = "124"; 
+                      features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_5_1.features_vector; Np.Ndarray.to_float_array neg_song_5_2.features_vector; Np.Ndarray.to_float_array neg_song_5_3.features_vector; Np.Ndarray.to_float_array neg_song_4.features_vector; Np.Ndarray.to_float_array neg_song_3.features_vector |])};;
+
 let standard_hyper : SVM_Model.hyperparameters = {reg = 1.0; shift = Np.empty [0]; scale = Np.empty [0]};;
 
 let svm_1 = SVM_Model.train standard_hyper pos_playlist_1 neg_playlist_1
@@ -191,6 +241,129 @@ let test_svm_classes _ =
   assert_equal (SVM_Model.classes svm_3) ("Positive Playlist 3", "Negative Playlist 3");
 ;;
 
+let test_balance _ = 
+  assert_equal (Np.Ndarray.to_float_array pos_playlist_3.features_matrix) (SVM_Classification.balance_classes (pos_playlist_3, neg_playlist_3) |> fun (new_pos, _) -> Np.Ndarray.to_float_array new_pos.features_matrix);
+  assert_bool "Balanced playlists still balanced" (SVM_Classification.balance_classes (pos_playlist_1, neg_playlist_1) |> fun (new_pos, new_neg) -> Np.size new_pos.features_matrix = Np.size new_neg.features_matrix);
+  assert_bool "Songs not subsampled in imbalance" (SVM_Classification.balance_classes (pos_playlist_4, neg_playlist_4) |> fun (new_pos, new_neg) -> Np.size new_pos.features_matrix =  Np.size new_neg.features_matrix);
+;;
+
+let test_vector_equal _ =
+  assert_bool "Vector does not equal itself" @@ vector_equal pos_song_1.features_vector pos_song_1.features_vector;
+  assert_bool "Vector does not equal itself" @@ vector_equal neg_song_1.features_vector neg_song_1.features_vector;
+  assert_bool "Vector does not equal itself" @@ vector_equal pos_song_4_1.features_vector pos_song_4_1.features_vector;
+;;
+
+let test_matrix_equal _ =
+  assert_bool "Matrix does not equal itself" @@ matrix_equal pos_playlist_1.features_matrix pos_playlist_1.features_matrix;
+  assert_bool "Matrix does not equal itself" @@ matrix_equal pos_playlist_3.features_matrix pos_playlist_3.features_matrix;
+  assert_bool "Matrix does not equal itself" @@ matrix_equal pos_playlist_4.features_matrix pos_playlist_4.features_matrix;
+;;
+
+let test_matrix_of_vector_list _ =
+  assert_bool "Singleton matrix created from list not as expected" (matrix_equal pos_playlist_1.features_matrix @@ matrix_of_vector_list [pos_song_1.features_vector]); 
+  assert_bool "Real matrix created from list not as expected" (matrix_equal pos_playlist_4.features_matrix @@ matrix_of_vector_list [pos_song_4_1.features_vector; pos_song_4_2.features_vector; pos_song_4_3.features_vector]); 
+;;
+
+let single = Np.Ndarray.of_float_list [0.; 1.; 2.; 3.;]
+
+let added = Np.Ndarray.of_float_list [1.; 2.; 3.; 4.;]
+
+let doubled = Np.Ndarray.of_float_list [0.; 2.; 4.; 6.;]
+
+let neg = Np.Ndarray.of_float_list [-1.; -2.; -3.; -4.;]
+
+let combined = matrix_of_vector_list [single;added;doubled;neg;]
+
+let test_vector_map _ =
+  assert_bool "No operation mapping" @@ vector_equal single @@ map_vector single (fun x -> x);
+  assert_bool "Added 1 to each" @@ vector_equal added @@ map_vector single (fun x -> Float.(+) x 1.);
+  assert_bool "Doubled vector entries" @@ vector_equal doubled @@ map_vector single (fun x -> Float.( * ) x 2.);
+  assert_bool "Negative vector entries" @@ vector_equal neg @@ map_vector single (fun x -> Float.( * ) (-1.0) @@ Float.(+) x 1.);
+;;
+
+let test_vector_min _ = 
+  assert_bool "Found non-minimum element in vector 1" @@ float_equals_epsilon 0. @@ vec_min single;
+  assert_bool "Found non-minimum element in vector 2" @@ float_equals_epsilon 0. @@ vec_min doubled;
+  assert_bool "Found non-minimum element in vector 3" @@ float_equals_epsilon 1. @@ vec_min added;
+  assert_bool "Found non-minimum element in vector 4" @@ float_equals_epsilon (-4.0) @@ vec_min neg;
+;;
+
+let test_vector_max _ = 
+  assert_bool "Found non-maximum element in vector 1" @@ float_equals_epsilon 3. @@ vec_max single;
+  assert_bool "Found non-maximum element in vector 2" @@ float_equals_epsilon 6. @@ vec_max doubled;
+  assert_bool "Found non-maximum element in vector 3" @@ float_equals_epsilon 4. @@ vec_max added;
+  assert_bool "Found non-maximum element in vector 4" @@ float_equals_epsilon (-1.0) @@ vec_max neg;
+;;
+
+let test_vector_mean _ = 
+  assert_bool "Incorrect mean 1" @@ float_equals_epsilon 1.5 @@ vec_mean single;
+  assert_bool "Incorrect mean 2" @@ float_equals_epsilon 3. @@ vec_mean doubled;
+  assert_bool "Incorrect mean 3" @@ float_equals_epsilon 2.5 @@ vec_mean added;
+  assert_bool "Incorrect mean 4" @@ float_equals_epsilon (-3.0) @@ vec_mean neg;
+;;
+
+let test_vector_std _ = 
+  assert_bool "Incorrect Std 1" @@ float_equals_epsilon 1.118 @@ vec_std single @@ vec_mean single;
+  assert_bool "Incorrect Std 2" @@ float_equals_epsilon 2.2361 @@ vec_std doubled @@ vec_mean doubled;
+  assert_bool "Incorrect Std 3" @@ float_equals_epsilon 1.118 @@ vec_std added @@ vec_mean added;
+  assert_bool "Incorrect Std 4" @@ float_equals_epsilon 1.118 @@ vec_std neg @@ vec_mean neg;
+;;
+
+let test_vector_to_string _ = 
+  assert_equal " 0. 1. 2. 3." @@ vector_to_string single;
+  assert_equal " 1. 2. 3. 4." @@ vector_to_string added;
+  assert_equal " 0. 2. 4. 6." @@ vector_to_string doubled;
+  assert_equal " -1. -2. -3. -4." @@ vector_to_string neg;
+;;
+
+let test_normalize _ = 
+  assert_bool "Not within correct range" (SVM_Classification.normalize (pos_playlist_big, neg_playlist_big) 
+  |> fun (new_pos, _, _) 
+  -> List.for_all ~f:(fun col -> 
+    Array.for_all ~f:(fun elem 
+    -> ((Float.(>=) 1.0 elem) && (Float.(>=) elem 0.0))) @@ Np.Ndarray.to_float_array col) 
+    (matrix_columns_to_vector_list new_pos.features_matrix)); 
+;;
+
+let test_standardize _ = 
+  assert_bool "Not within correct distribution" (SVM_Classification.standardize (pos_playlist_big, neg_playlist_big) 
+  |> fun (new_pos, _, _) 
+  -> List.for_all ~f:(fun col ->  
+((float_equals_epsilon_custom 0.0 (vec_mean col) 0.5) && (vec_std col @@ vec_mean col |> fun std -> float_equals_epsilon_custom 1.0 std 0.5 || float_equals_epsilon_custom 0.0 std 0.5)))
+    (matrix_columns_to_vector_list new_pos.features_matrix)); 
+;;
+
+let test_randomize _ =
+  assert_equal (Np.size pos_playlist_big.features_matrix) (SVM_Classification.randomize pos_playlist_big |> fun p -> Np.size p.features_matrix);
+;;
+
+let test_split _ = 
+  assert_bool "hi" (SVM_Classification.normalize (pos_playlist_big, neg_playlist_big) |>
+  fun (pos, neg, preprocess) -> SVM_Classification.split (pos, neg) 0.25 0.25 preprocess |>
+  fun {pos_train; pos_valid; 
+  pos_test; 
+  _} -> 2 = (List.length @@ matrix_rows_to_vector_list pos_train.features_matrix) && 1 = (List.length @@ matrix_rows_to_vector_list pos_valid.features_matrix) && 2 = (List.length @@ matrix_rows_to_vector_list pos_test.features_matrix));
+;;
+(*
+let test_save_load_dataset _ =
+  assert_bool "hi" (SVM_Classification.normalize (pos_playlist_big, neg_playlist_big) |>
+  fun (pos, neg, preprocess) -> SVM_Classification.split (pos, neg) 0.25 0.25 preprocess |>
+  fun d -> let unique = Float.to_string @@ Unix.time () in save_dataset d @@ "testing" ^ unique; load_dataset @@ "testing" ^ unique |> fun loaded d;
+;;*)
+
+let numpy_tests =
+  "Numpy" >: test_list [
+    "Vector Equal" >:: test_vector_equal;
+    "Matrix Equal" >:: test_matrix_equal;
+    "Matrix of Vectors List" >:: test_matrix_of_vector_list;
+    "Map Vectors" >:: test_vector_map;
+    "Vector Min" >:: test_vector_min;
+    "Vector Max" >:: test_vector_max;
+    "Vector Mean" >:: test_vector_max;
+    "Vector Std" >:: test_vector_std;
+    "Vector To String" >:: test_vector_to_string;
+  ]
+
 let svm_tests =
   "SVM" >: test_list [
     "Classes" >:: test_svm_classes;
@@ -206,6 +379,11 @@ let machine_learning_tests =
     "Pretty Confusion" >:: test_pretty_confusion;
     "Accuracy" >:: test_acc;
     "F1 Score" >:: test_f1;
+    "Class Balancing" >:: test_balance;
+    "Normalization" >:: test_normalize;
+    "Standardization" >:: test_standardize;
+    "Randomization" >:: test_randomize;
+    "Split Dataset" >:: test_split;
   ]
 
 (* ----- Spotify Tests - Asynchronous!! Tests return unit Lwt.t rather than unit ------ *)
@@ -306,6 +484,7 @@ let spotify_tests =
 
 let series =
   "Final Project Tests" >::: [
+    numpy_tests;
     svm_tests;
     machine_learning_tests;
     spotify_tests; 
