@@ -6,7 +6,6 @@
   ounit2-lwt
   svm
   spotify
-  torch
   cohttp-lwt-unix
   lwt
   sklearn
