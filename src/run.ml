@@ -100,7 +100,7 @@ let download =
       and neg_id = flag "--neg-id" (required string)
           ~doc:" The negative playlist id"
       and filename = flag "--dataset-folder" (required Filename.arg_type)
-          ~doc:" The file location to store the model"
+          ~doc:" name for the folder to store the dataset (inside ./datasets/)"
       and norm = flag "--normalize" (no_arg)
           ~doc:"Option to normalize each feature in the range (0,1)"
       and standard = flag "--standardize" (no_arg)
@@ -157,7 +157,7 @@ let test =
       let%map_open model_file = flag "--model-file" (required Filename.arg_type)
           ~doc:" The file location to retrieve the model"
       and dataset_folder = flag "--dataset-folder" (required Filename.arg_type)
-          ~doc:" The positive test playlist id"
+          ~doc:" The folder name of the dataset (inside ./datasets/)"
       in
       fun () -> test_action dataset_folder model_file)
 ;;
