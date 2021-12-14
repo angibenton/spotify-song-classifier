@@ -1,4 +1,6 @@
 # spotify-song-classifier
+[GitHub repository](https://github.com/angibenton/spotify-song-classifier)
+
 Final project for Functional Programming in Software Engineering, Fall 2021, Johns Hopkins University.
 
 Command-line application built in OCaml for classifying spotify songs into playlists, based on the audio features provided by the [Spotify Web API](https://developer.spotify.com/documentation/web-api/). Given any two playlists, the user can train and save a binary classifier, and then feed it a new song, to predict which of the two playlists the song "belongs" to. 
