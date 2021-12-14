@@ -60,17 +60,17 @@ Example:
 $ dune exec -- ./src/run.exe download --pos-id 1h0CEZCm6IbFTbxThn6Xcs --neg-id 68PbMiU12ssvm5UAHsqqOi --dataset-folder trap_vs_classical --test 0.2 --val 0.1
 ```
 Required:
-* **--pos-id**  Spotify playlist ID for the playlist to be assigned +1 as a label 
-* **--neg-id**  Spotify playlist ID for the playlist to be assigned -1 as a label 
-* **--dataset-folder**  a name for the folder that will be created to hold the cleaned dataset 
-* **--test**  fraction of the data to reserve for testing 
-* **--test**  fraction of the data to reserve for validation
+* **--pos-id** = Spotify ID for the playlist to be assigned +1 as a label 
+* **--neg-id** = Spotify ID for the playlist to be assigned -1 as a label 
+* **--dataset-folder** = a name for the folder that will be created to hold the cleaned dataset 
+* **--test** = fraction of the data to reserve for testing 
+* **--test** = fraction of the data to reserve for validation
   
 Optional: 
-* **--standardize**  center each feature around 0 with unit standard deviation
-* **--normalize**  normalize each feature in the range (0,1)
-* **--balance**  subsample from classes to equalize quanities, by default included
-* **--random**  randomize order of samples
+* **--standardize** = center each feature around 0 with unit standard deviation
+* **--normalize** = normalize each feature in the range (0,1)
+* **--balance** = subsample from classes to equalize quanities, by default included
+* **--random** = randomize order of samples
 
 
 ## Mode: train
@@ -81,14 +81,14 @@ Example:
 $ dune exec -- ./src/run.exe train --dataset-folder  trap_vs_classical --model-file trap_vs_classical_model.txt
 ```
 Required:
-* **--dataset-folder**  folder you gave during 'download' mode
-* **--model-file**  new file to save the model in
+* **--dataset-folder** = folder you gave during 'download' mode
+* **--model-file** = new file to save the model in
   
 Optional: 
-* **--c**  Specify the regularization strength. Defaults to 1.0, 
+* **--c**  = Specify the regularization strength. Defaults to 1.0, 
                  or if multiple provided, must provide evaluation metric
                  and will automatically tune to the best model.
-* **--metric**  Metric to optimize in tuning (either "accuracy" or "f1")
+* **--metric**  = Metric to optimize in tuning (either "accuracy" or "f1")
 
 ## Mode: test
 Test a binary classifier (SVM) on the test portion of a dataset and print the results. 
@@ -98,8 +98,8 @@ Example:
 $ dune exec -- ./src/run.exe test --dataset-folder  trap_vs_classical --model-file trap_vs_classical_model.txt
 ```
 Required:
-* **--dataset-folder**  folder you gave during 'download' mode
-* **--model-file**  filename you gave during 'train' mode
+* **--dataset-folder** = folder you gave during 'download' mode
+* **--model-file** = filename you gave during 'train' mode
 
 
 
@@ -108,11 +108,11 @@ Fetch the feature information for a song id and use a pretrained model to classi
 
 Example: 
 ```
-dune exec -- ./src/run.exe classify --model-file trap_vs_classical_model.txt --song-id 1LNqr2FALBNFX1smNJcKD2
+$ dune exec -- ./src/run.exe classify --model-file trap_vs_classical_model.txt --song-id 1LNqr2FALBNFX1smNJcKD2
 ```
 Required:
 * **--model-file**  filename you gave during 'train' mode 
-* **--song-id**  Spotify song id of a new song (may or may not be a member of either playlists)
+* **--song-id**  Spotify ID of a new song (may or may not be a member of either playlists)
 
 # Testing 
 To test our libraries, run
