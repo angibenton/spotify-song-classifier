@@ -114,7 +114,6 @@ let request_playlist_metadata (id: string) (api_token: string): string t =
   let description = "request metadata for playlist (id = " ^ id ^ ")" in
   general_api_request uri_suffix description api_token
 
-
 let request_song_features_batch (ids_comma_sep: string) (api_token: string): string t = 
   let uri_suffix = "audio-features/?ids=" ^ ids_comma_sep in
   let description = "request batch of song ids" in
