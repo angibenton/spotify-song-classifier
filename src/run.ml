@@ -69,7 +69,7 @@ let classify_action (filename: string) (song: string): _ =
     let%lwt s = song_of_id song token 
     in Stdio.print_string "Classifying song...\n"; 
     SVM_Classification.classify svm s
-    |> fun (p) -> Stdio.print_string @@ "Song classified as a member of \"" ^ p ^ "\"\n"; 
+    |> fun (p) -> Stdio.print_string @@ "\"" ^ s.name ^ "\" classified as a member of \"" ^ p ^ "\"\n"; 
     Lwt.return ();
   in Lwt_main.run classify_action_monadic;
 ;;
