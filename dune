@@ -2,11 +2,25 @@
  (target final.zip)
  (deps
   src/machine_learning.ml
+  src/machine_learning.mli
   src/svm.ml
   src/spotify.ml
+  src/spotify.mli
+  src/numpy_helper.ml
   src/run.ml
   src/dune
   tests/tests.ml
-  tests/dune)
+  tests/dune
+  datasets/deathmetal_vs_classical/neg_test
+  datasets/deathmetal_vs_classical/neg_train
+  datasets/deathmetal_vs_classical/neg_val
+  datasets/deathmetal_vs_classical/pos_test
+  datasets/deathmetal_vs_classical/pos_train
+  datasets/deathmetal_vs_classical/pos_val
+  datasets/deathmetal_vs_classical/preprocess
+  models/deathmetal_vs_classical_model.txt
+  testworkflow.sh
+  README.md
+  spotify-song-classifier.opam)
  (action
   (run zip -R final.zip %{deps})))

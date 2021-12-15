@@ -1,4 +1,11 @@
 open Numpy_helper
+
+(* Spotify library 
+  - communication with the Spotify Web API  
+  - extracting relevant data from Spotify's JSON representation of songs and playlists 
+  - saving songs and playlists to local files 
+*)
+
 type song = {name: string; sid: string; features_vector: Np.Ndarray.t;}
 
 type playlist = {name: string; pid: string; features_matrix: Np.Ndarray.t;}
@@ -9,6 +16,9 @@ val get_new_api_token : _ -> string Lwt.t
 val song_of_id : string -> string -> song Lwt.t
 (* Use a playlist id & access token to query spotify for playlist data and convert the result to (PROMISE OF) a playlist object *)
 val playlist_of_id : string -> string -> playlist Lwt.t
+(* get a new playlist that is the same as input, but with a new features vector *)
 val replace_features : playlist -> Np.Ndarray.t -> playlist 
+(* save a playlist record to a file *)
 val save_playlist : playlist -> string -> unit 
+(* load a playlist record from a file *)
 val load_playlist : string -> playlist 

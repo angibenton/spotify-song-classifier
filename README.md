@@ -42,7 +42,7 @@ $ deactivate
 ```
 
 # Usage 
-The following example is also provided as a bash script, ./testworkflow.sh, with explanatory comments. 
+The following example is also provided as a bash script, **./testworkflow.sh**, with explanatory comments. Additionally, a sample dataset and model are provided; **datasets/deathmethal_vs_classical/\***, **models/deathmetal_vs_classical_model.txt**. 
 
 To compile the project:
 ```
