@@ -6,9 +6,11 @@ open Svm
 open Spotify
 open Numpy_helper
 
-let float_equals_epsilon_custom = fun f1 f2 eps -> Float.(-) f1 f2 |> Float.abs |>  Float.(>) eps;;
+let float_equals_epsilon_custom 
+  = fun f1 f2 eps -> Float.(-) f1 f2 |> Float.abs |>  Float.(>) eps;;
 
-let float_equals_epsilon = fun f1 f2 -> Float.(-) f1 f2 |> Float.abs |>  Float.(>) 0.001;;
+let float_equals_epsilon
+  = fun f1 f2 -> Float.(-) f1 f2 |> Float.abs |>  Float.(>) 0.001;;
 
 let cm_1 = {tp = 5; fp = 0; fn = 6; tn = 4};;
 let cm_2 = {tp = 55431; fp = 5; fn = 58520; tn = 314};;
@@ -62,6 +64,8 @@ let test_f1 _ =
                                     @@ SVM_Classification.f1_score cm_3);
 ;;
 
+(* Artificial Songs, Playlists, Hyperparameters, SVM's, etc. for tests *)
+
 let pos_song_1 = {name = "Positive Song 1"; sid = "1";
                   features_vector = Np.reshape ~newshape:[1; 1] 
                     @@ Np.Ndarray.vectorf [|1.|]}
@@ -75,7 +79,8 @@ let pos_song_2 = {name = "Positive Song 2"; sid = "2";
                     @@ Np.Ndarray.vectorf [| 10.; 10. |]}
 
 let neg_song_2 = {name = "Negative Song 2"; sid = "2";
-                  features_vector = Np.reshape ~newshape:[1; 2] @@  Np.Ndarray.vectorf [| -10.; -10. |]}
+                  features_vector = Np.reshape ~newshape:[1; 2] 
+                    @@  Np.Ndarray.vectorf [| -10.; -10. |]}
 
 let pos_song_3 = {name = "Positive Song 1"; sid = "3";
                   features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
@@ -130,29 +135,49 @@ let neg_song_5_2 = {name = "Negative Song 3"; sid = "3";
                         [| 3.2; 35.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 2.; 0.|]};;
 
 let neg_song_5_3 = {name = "Negative Song 3"; sid = "3";
-                        features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
-                            [| 9.2; 2.3; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 12.; 0.|]};;
+                    features_vector = Np.reshape ~newshape:[1; 13] @@ Np.Ndarray.vectorf 
+                        [| 9.2; 2.3; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 0.; 12.; 0.|]};;
 
-let pos_playlist_4 = {name = "Positive Playlist 3"; pid = "123"; 
-                      features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_4_1.features_vector; Np.Ndarray.to_float_array pos_song_4_2.features_vector; Np.Ndarray.to_float_array pos_song_4_3.features_vector; |])};;
-let neg_playlist_4 = {name = "Negative Playlist 3"; pid = "124"; 
+let pos_playlist_4 = {name = "Positive Playlist 4"; pid = "123"; 
+                      features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_4_1.features_vector; 
+                                                       Np.Ndarray.to_float_array pos_song_4_2.features_vector; 
+                                                       Np.Ndarray.to_float_array pos_song_4_3.features_vector; |])};;
+let neg_playlist_4 = {name = "Negative Playlist 4"; pid = "124"; 
                       features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_4.features_vector |])};;
 
-let pos_playlist_5 = {name = "Positive Playlist 3"; pid = "123"; 
+let pos_playlist_5 = {name = "Positive Playlist 5"; pid = "123"; 
                       features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_5.features_vector |])};;
-let neg_playlist_5 = {name = "Negative Playlist 3"; pid = "124"; 
-                      features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_5_1.features_vector; Np.Ndarray.to_float_array neg_song_5_2.features_vector;  Np.Ndarray.to_float_array neg_song_5_3.features_vector |])};;
+let neg_playlist_5 = {name = "Negative Playlist 5"; pid = "124"; 
+                      features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_5_1.features_vector; 
+                                                      Np.Ndarray.to_float_array neg_song_5_2.features_vector;  
+                                                      Np.Ndarray.to_float_array neg_song_5_3.features_vector |])};;
 
-                      let pos_playlist_big = {name = "Positive Playlist 3"; pid = "123"; 
-                      features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_4_1.features_vector; Np.Ndarray.to_float_array pos_song_4_2.features_vector; Np.Ndarray.to_float_array pos_song_4_3.features_vector; Np.Ndarray.to_float_array pos_song_5.features_vector; Np.Ndarray.to_float_array pos_song_3.features_vector |])};;
-let neg_playlist_big = {name = "Negative Playlist 3"; pid = "124"; 
-                      features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_5_1.features_vector; Np.Ndarray.to_float_array neg_song_5_2.features_vector; Np.Ndarray.to_float_array neg_song_5_3.features_vector; Np.Ndarray.to_float_array neg_song_4.features_vector; Np.Ndarray.to_float_array neg_song_3.features_vector |])};;
+let pos_playlist_big = {name = "Positive Playlist Big"; pid = "123"; 
+                        features_matrix = (Np.matrixf [| Np.Ndarray.to_float_array pos_song_4_1.features_vector; 
+                                                         Np.Ndarray.to_float_array pos_song_4_2.features_vector; 
+                                                         Np.Ndarray.to_float_array pos_song_4_3.features_vector; 
+                                                         Np.Ndarray.to_float_array pos_song_5.features_vector; 
+                                                         Np.Ndarray.to_float_array pos_song_3.features_vector |])};;
+let neg_playlist_big = {name = "Negative Playlist Big"; pid = "124"; 
+                        features_matrix = (Np.matrixf [|Np.Ndarray.to_float_array neg_song_5_1.features_vector; 
+                                                        Np.Ndarray.to_float_array neg_song_5_2.features_vector; 
+                                                        Np.Ndarray.to_float_array neg_song_5_3.features_vector; 
+                                                        Np.Ndarray.to_float_array neg_song_4.features_vector; 
+                                                        Np.Ndarray.to_float_array neg_song_3.features_vector |])};;
 
 let standard_hyper : SVM_Model.hyperparameters = {reg = 1.0; shift = Np.empty [0]; scale = Np.empty [0]};;
+let huge_hyper : SVM_Model.hyperparameters = {reg = 1000.0; shift = Np.empty [0]; scale = Np.empty [0]};;
+let preprocess_hyper : SVM_Model.hyperparameters = {reg = 1.0; 
+                                                    shift = Np.Ndarray.of_float_list [0.;0.;0.;0.;0.;0.;0.;0.;0.;0.;0.;0.;0.;]; 
+                                                    scale = Np.Ndarray.of_float_list [1.;1.;1.;1.;1.;1.;1.;1.;1.;1.;1.;1.;1.;]};;
+
 
 let svm_1 = SVM_Model.train standard_hyper pos_playlist_1 neg_playlist_1
 let svm_2 = SVM_Model.train standard_hyper pos_playlist_2 neg_playlist_2
 let svm_3 = SVM_Model.train standard_hyper  pos_playlist_3 neg_playlist_3
+let svm_4 = SVM_Model.train standard_hyper pos_playlist_4 neg_playlist_4
+let svm_4_reg = SVM_Model.train huge_hyper pos_playlist_3 neg_playlist_3
+let svm_preprocess = SVM_Model.train preprocess_hyper pos_playlist_3 neg_playlist_3
 
 let test_classify _ = 
   assert_equal "Positive Playlist 1" @@ SVM_Classification.classify svm_1 pos_song_1;
@@ -161,6 +186,16 @@ let test_classify _ =
   assert_equal "Negative Playlist 2" @@ SVM_Classification.classify svm_2 neg_song_2;
   assert_equal "Positive Playlist 3" @@ SVM_Classification.classify svm_3 pos_song_3;
   assert_equal "Negative Playlist 3" @@ SVM_Classification.classify svm_3 neg_song_3;
+  assert_equal "Positive Playlist 3" @@ SVM_Classification.classify svm_preprocess pos_song_3;
+  assert_equal "Negative Playlist 3" @@ SVM_Classification.classify svm_preprocess neg_song_3;
+;;
+
+let test_tune _ =
+  let chosen = SVM_Classification.tune [svm_4_reg; svm_4; svm_preprocess] pos_playlist_4 neg_playlist_4 SVM_Classification.accuracy
+  in assert_equal "Positive Playlist 4" @@ SVM_Classification.classify chosen pos_song_4_1;
+  assert_equal "Negative Playlist 4" @@ SVM_Classification.classify chosen neg_song_4;
+  assert_raises (Failure "No models provided") 
+    (fun () -> SVM_Classification.tune [] pos_playlist_4 neg_playlist_4 SVM_Classification.accuracy)
 ;;
 
 let true_cm = {tp = 1; fp = 0; fn = 0; tn = 1};;
@@ -242,9 +277,15 @@ let test_svm_classes _ =
 ;;
 
 let test_balance _ = 
-  assert_equal (Np.Ndarray.to_float_array pos_playlist_3.features_matrix) (SVM_Classification.balance_classes (pos_playlist_3, neg_playlist_3) |> fun (new_pos, _) -> Np.Ndarray.to_float_array new_pos.features_matrix);
-  assert_bool "Balanced playlists still balanced" (SVM_Classification.balance_classes (pos_playlist_1, neg_playlist_1) |> fun (new_pos, new_neg) -> Np.size new_pos.features_matrix = Np.size new_neg.features_matrix);
-  assert_bool "Songs not subsampled in imbalance" (SVM_Classification.balance_classes (pos_playlist_4, neg_playlist_4) |> fun (new_pos, new_neg) -> Np.size new_pos.features_matrix =  Np.size new_neg.features_matrix);
+  assert_equal (Np.Ndarray.to_float_array pos_playlist_3.features_matrix) 
+    (SVM_Classification.balance_classes (pos_playlist_3, neg_playlist_3) 
+     |> fun (new_pos, _) -> Np.Ndarray.to_float_array new_pos.features_matrix);
+  assert_bool "Balanced playlists still balanced" 
+    (SVM_Classification.balance_classes (pos_playlist_1, neg_playlist_1) 
+     |> fun (new_pos, new_neg) -> Np.size new_pos.features_matrix = Np.size new_neg.features_matrix);
+  assert_bool "Songs not subsampled in imbalance" 
+    (SVM_Classification.balance_classes (pos_playlist_4, neg_playlist_4) 
+     |> fun (new_pos, new_neg) -> Np.size new_pos.features_matrix =  Np.size new_neg.features_matrix);
 ;;
 
 let test_vector_equal _ =
@@ -260,8 +301,12 @@ let test_matrix_equal _ =
 ;;
 
 let test_matrix_of_vector_list _ =
-  assert_bool "Singleton matrix created from list not as expected" (matrix_equal pos_playlist_1.features_matrix @@ matrix_of_vector_list [pos_song_1.features_vector]); 
-  assert_bool "Real matrix created from list not as expected" (matrix_equal pos_playlist_4.features_matrix @@ matrix_of_vector_list [pos_song_4_1.features_vector; pos_song_4_2.features_vector; pos_song_4_3.features_vector]); 
+  assert_bool "Singleton matrix created from list not as expected" 
+    (matrix_equal pos_playlist_1.features_matrix @@ matrix_of_vector_list [pos_song_1.features_vector]); 
+  assert_bool "Real matrix created from list not as expected" 
+    (matrix_equal pos_playlist_4.features_matrix 
+     @@ matrix_of_vector_list [pos_song_4_1.features_vector; 
+                               pos_song_4_2.features_vector; pos_song_4_3.features_vector]); 
 ;;
 
 let single = Np.Ndarray.of_float_list [0.; 1.; 2.; 3.;]
@@ -318,38 +363,97 @@ let test_vector_to_string _ =
 
 let test_normalize _ = 
   assert_bool "Not within correct range" (SVM_Classification.normalize (pos_playlist_big, neg_playlist_big) 
-  |> fun (new_pos, _, _) 
-  -> List.for_all ~f:(fun col -> 
-    Array.for_all ~f:(fun elem 
-    -> ((Float.(>=) 1.0 elem) && (Float.(>=) elem 0.0))) @@ Np.Ndarray.to_float_array col) 
-    (matrix_columns_to_vector_list new_pos.features_matrix)); 
+                                          |> fun (new_pos, _, _) 
+                                          -> List.for_all ~f:(fun col -> 
+                                              Array.for_all ~f:(fun elem 
+                                                                 -> ((Float.(>=) 1.0 elem) 
+                                                                     && (Float.(>=) elem 0.0))) 
+                                              @@ Np.Ndarray.to_float_array col) 
+                                            (matrix_columns_to_vector_list new_pos.features_matrix)); 
 ;;
 
 let test_standardize _ = 
   assert_bool "Not within correct distribution" (SVM_Classification.standardize (pos_playlist_big, neg_playlist_big) 
-  |> fun (new_pos, _, _) 
-  -> List.for_all ~f:(fun col ->  
-((float_equals_epsilon_custom 0.0 (vec_mean col) 0.5) && (vec_std col @@ vec_mean col |> fun std -> float_equals_epsilon_custom 1.0 std 0.5 || float_equals_epsilon_custom 0.0 std 0.5)))
-    (matrix_columns_to_vector_list new_pos.features_matrix)); 
+                                                 |> fun (new_pos, _, _) 
+                                                 -> List.for_all ~f:(fun col ->  
+                                                     ((float_equals_epsilon_custom 0.0 (vec_mean col) 0.5) 
+                                                      && (vec_std col @@ vec_mean col 
+                                                          |> fun std -> float_equals_epsilon_custom 1.0 std 0.5 
+                                                                        || float_equals_epsilon_custom 0.0 std 0.5)))
+                                                   (matrix_columns_to_vector_list new_pos.features_matrix)); 
 ;;
 
 let test_randomize _ =
-  assert_equal (Np.size pos_playlist_big.features_matrix) (SVM_Classification.randomize pos_playlist_big |> fun p -> Np.size p.features_matrix);
+  assert_equal (Np.size pos_playlist_big.features_matrix) (SVM_Classification.randomize pos_playlist_big 
+                                                           |> fun p -> Np.size p.features_matrix);
 ;;
 
 let test_split _ = 
-  assert_bool "hi" (SVM_Classification.normalize (pos_playlist_big, neg_playlist_big) |>
-  fun (pos, neg, preprocess) -> SVM_Classification.split (pos, neg) 0.25 0.25 preprocess |>
-  fun {pos_train; pos_valid; 
-  pos_test; 
-  _} -> 2 = (List.length @@ matrix_rows_to_vector_list pos_train.features_matrix) && 1 = (List.length @@ matrix_rows_to_vector_list pos_valid.features_matrix) && 2 = (List.length @@ matrix_rows_to_vector_list pos_test.features_matrix));
+  let (pos, neg, preprocess) = SVM_Classification.normalize (pos_playlist_big, neg_playlist_big)
+  in assert_raises (Failure "Validation split size too small") (fun () -> SVM_Classification.split (pos, neg) 0.0 0.25 preprocess);
+  assert_raises (Failure "Test split size too small") (fun () -> SVM_Classification.split (pos, neg) 0.25 0.0 preprocess);
+  assert_raises (Failure "Train split size too small (validation + test too big)") 
+    (fun () -> SVM_Classification.split (pos, neg) 0.25 0.75 preprocess);
+  assert_bool "Normal Split with normalize" 
+    (SVM_Classification.normalize (pos_playlist_big, neg_playlist_big) 
+     |> fun (pos, neg, preprocess) -> SVM_Classification.split (pos, neg) 0.25 0.25 preprocess 
+                                      |> fun {pos_train; pos_valid; pos_test; _} 
+                                      -> 2 = (List.length @@ matrix_rows_to_vector_list pos_train.features_matrix) 
+                                         && 1 = (List.length @@ matrix_rows_to_vector_list pos_valid.features_matrix) 
+                                         && 2 = (List.length @@ matrix_rows_to_vector_list pos_test.features_matrix));
+  assert_bool "Normal Split with standardize" 
+    (SVM_Classification.standardize (pos_playlist_big, neg_playlist_big) 
+     |> fun (pos, neg, preprocess) -> SVM_Classification.split (pos, neg) 0.25 0.25 preprocess 
+                                      |> fun {pos_train; pos_valid; pos_test; _} 
+                                      -> 2 = (List.length @@ matrix_rows_to_vector_list pos_train.features_matrix) 
+                                         && 1 = (List.length @@ matrix_rows_to_vector_list pos_valid.features_matrix) 
+                                         && 2 = (List.length @@ matrix_rows_to_vector_list pos_test.features_matrix));
+  assert_bool "Normal Split without preprocessing" 
+    ((pos_playlist_big, neg_playlist_big, []) 
+     |> fun (pos, neg, preprocess) 
+     -> SVM_Classification.split (pos, neg) 0.25 0.25 preprocess 
+        |> fun {pos_train; pos_valid; pos_test;_} 
+        -> 2 = (List.length @@ matrix_rows_to_vector_list pos_train.features_matrix) 
+           && 1 = (List.length @@ matrix_rows_to_vector_list pos_valid.features_matrix) 
+           && 2 = (List.length @@ matrix_rows_to_vector_list pos_test.features_matrix));
 ;;
-(*
+
 let test_save_load_dataset _ =
-  assert_bool "hi" (SVM_Classification.normalize (pos_playlist_big, neg_playlist_big) |>
-  fun (pos, neg, preprocess) -> SVM_Classification.split (pos, neg) 0.25 0.25 preprocess |>
-  fun d -> let unique = Float.to_string @@ Unix.time () in save_dataset d @@ "testing" ^ unique; load_dataset @@ "testing" ^ unique |> fun loaded d;
-;;*)
+  assert_bool "Save and load normalized dataset" 
+    (SVM_Classification.normalize (pos_playlist_big, neg_playlist_big) 
+     |> fun (pos, neg, preprocess) 
+     -> SVM_Classification.split (pos, neg) 0.25 0.25 preprocess 
+        |> fun d -> let unique = Float.to_string @@ Unix.time () 
+        in SVM_Classification.save_dataset d @@ "testing" ^ unique; 
+        SVM_Classification.load_dataset @@ "testing" ^ unique |> 
+        fun {pos_train; pos_valid; pos_test; _} 
+        -> (matrix_equal pos_train.features_matrix d.pos_train.features_matrix 
+            && matrix_equal pos_valid.features_matrix d.pos_valid.features_matrix 
+            && matrix_equal pos_test.features_matrix d.pos_test.features_matrix));
+  assert_bool "Save and load standardized dataset" 
+    (SVM_Classification.standardize (pos_playlist_big, neg_playlist_big) |>
+     fun (pos, neg, preprocess) -> 
+     SVM_Classification.split (pos, neg) 0.25 0.25 preprocess |>
+     fun d -> let unique = Float.to_string @@ Float.(+) 1.0 
+                @@ Unix.time () in SVM_Classification.save_dataset d 
+     @@ "testing" ^ unique; SVM_Classification.load_dataset 
+     @@ "testing" ^ unique |> fun {pos_train; pos_valid; pos_test; _} 
+                            -> (matrix_equal pos_train.features_matrix d.pos_train.features_matrix 
+                                && matrix_equal pos_valid.features_matrix d.pos_valid.features_matrix 
+                                && matrix_equal pos_test.features_matrix d.pos_test.features_matrix));
+  assert_bool "Save and load non-preprocessed dataset" 
+    ((pos_playlist_big, neg_playlist_big, []) 
+     |> fun (pos, neg, preprocess) 
+     -> SVM_Classification.split (pos, neg) 0.25 0.25 preprocess 
+        |> fun d -> let unique = Float.to_string @@ Float.(+) 2.0 @@ Unix.time () 
+        in SVM_Classification.save_dataset d @@ "testing" ^ unique; SVM_Classification.load_dataset 
+        @@ "testing" ^ unique 
+                                                                    |> fun {pos_train; pos_valid; pos_test; _} 
+                                                                    -> (matrix_equal pos_train.features_matrix d.pos_train.features_matrix 
+                                                                        && matrix_equal pos_valid.features_matrix d.pos_valid.features_matrix 
+                                                                        && matrix_equal pos_test.features_matrix d.pos_test.features_matrix));
+;;
+
 
 let numpy_tests =
   "Numpy" >: test_list [
@@ -370,6 +474,7 @@ let svm_tests =
     "Equal" >:: test_svm_equal;
     "Save and Load" >:: test_svm_save_load;
     "Train and Predict" >:: test_svm_train_predict;
+    "Tune" >:: test_tune;
   ]
 
 let machine_learning_tests =
@@ -384,6 +489,7 @@ let machine_learning_tests =
     "Standardization" >:: test_standardize;
     "Randomization" >:: test_randomize;
     "Split Dataset" >:: test_split;
+    "Save and Load Dataset" >:: test_save_load_dataset;
   ]
 
 (* ----- Spotify Tests - Asynchronous!! Tests return unit Lwt.t rather than unit ------ *)
