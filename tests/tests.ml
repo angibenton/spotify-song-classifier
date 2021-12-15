@@ -175,8 +175,7 @@ let preprocess_hyper : SVM_Model.hyperparameters = {reg = 1.0;
 let svm_1 = SVM_Model.train standard_hyper pos_playlist_1 neg_playlist_1
 let svm_2 = SVM_Model.train standard_hyper pos_playlist_2 neg_playlist_2
 let svm_3 = SVM_Model.train standard_hyper  pos_playlist_3 neg_playlist_3
-let svm_4 = SVM_Model.train standard_hyper pos_playlist_4 neg_playlist_4
-let svm_4_reg = SVM_Model.train huge_hyper pos_playlist_3 neg_playlist_3
+let svm_4s = SVM_Model.tune [standard_hyper; huge_hyper] pos_playlist_4 neg_playlist_4
 let svm_preprocess = SVM_Model.train preprocess_hyper pos_playlist_3 neg_playlist_3
 
 let test_classify _ = 
@@ -191,7 +190,7 @@ let test_classify _ =
 ;;
 
 let test_tune _ =
-  let chosen = SVM_Classification.tune [svm_4_reg; svm_4; svm_preprocess] pos_playlist_4 neg_playlist_4 SVM_Classification.accuracy
+  let chosen = SVM_Classification.tune (svm_preprocess :: svm_4s) pos_playlist_4 neg_playlist_4 SVM_Classification.accuracy
   in assert_equal "Positive Playlist 4" @@ SVM_Classification.classify chosen pos_song_4_1;
   assert_equal "Negative Playlist 4" @@ SVM_Classification.classify chosen neg_song_4;
   assert_raises (Failure "No models provided") 
