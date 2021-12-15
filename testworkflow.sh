@@ -17,7 +17,7 @@ MODELFILE=trap_vs_classical_model.txt
 rm -r ./datasets/$DATASETFOLDER 
 rm ./models/$MODELFILE
 
-# ENTER VENV 
+# ENTER VENV (see README.md for venv setup)
 source .venv/bin/activate
 
 # build the project  
